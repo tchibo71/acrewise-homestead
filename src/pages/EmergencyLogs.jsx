@@ -33,7 +33,24 @@ export default function EmergencyLogs() {
 
   const { data: emergencyLogs = [], isLoading } = useQuery({
     queryKey: ['emergency-logs'],
-    queryFn: () => base44.entities.EmergencyLog.list('-timestamp'),
+    queryFn: async () => {
+      const logs = await base44.entities.EmergencyLog.list('-timestamp');
+      // Auto-void logs older than 24 hours that are incomplete
+      const now = new Date();
+      for (const log of logs) {
+        if (log.quick_description === "INCOMPLETE - AWAITING DETAILS") {
+          const logTime = new Date(log.timestamp);
+          const hoursSince = (now - logTime) / (1000 * 60 * 60);
+          if (hoursSince > 24 && !log.voided) {
+            await base44.entities.EmergencyLog.update(log.id, { 
+              voided: true, 
+              quick_description: "VOIDED - Not completed within 24 hours" 
+            });
+          }
+        }
+      }
+      return logs;
+    },
   });
 
   const { data: livestock = [] } = useQuery({
@@ -73,19 +90,38 @@ export default function EmergencyLogs() {
   };
 
   const handleSaveDetails = async () => {
+    // If this was an incomplete log, update the description and mark as complete
+    const updates = { ...editFormData };
+    if (selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS") {
+      if (!updates.quick_description || updates.quick_description === "INCOMPLETE - AWAITING DETAILS") {
+        alert("Please provide a description before saving");
+        return;
+      }
+    }
+    
     await updateLogMutation.mutateAsync({
       id: selectedLog.id,
-      data: editFormData
+      data: updates
     });
+  };
+
+  const getTimeRemaining = (timestamp) => {
+    const now = new Date();
+    const logTime = new Date(timestamp);
+    const hoursRemaining = 24 - ((now - logTime) / (1000 * 60 * 60));
+    return Math.max(0, hoursRemaining);
   };
 
   const filteredLogs = emergencyLogs.filter(log => {
     if (filterStatus === "all") return true;
-    if (filterStatus === "unresolved") return !log.resolved;
+    if (filterStatus === "incomplete") return log.quick_description === "INCOMPLETE - AWAITING DETAILS";
+    if (filterStatus === "unresolved") return !log.resolved && !log.voided;
     if (filterStatus === "resolved") return log.resolved;
     if (filterStatus === "critical") return log.severity === "critical";
     return true;
   });
+
+  const incompleteCount = emergencyLogs.filter(l => l.quick_description === "INCOMPLETE - AWAITING DETAILS").length;
 
   const unresolvedCount = emergencyLogs.filter(l => !l.resolved).length;
   const criticalCount = emergencyLogs.filter(l => l.severity === "critical" && !l.resolved).length;
@@ -108,6 +144,13 @@ export default function EmergencyLogs() {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Emergency Logs</h1>
             <p className="text-gray-600 mt-1">Timestamped records for insurance and vet documentation</p>
+            {incompleteCount > 0 && (
+              <div className="mt-2">
+                <Badge className="bg-red-600 text-white animate-pulse">
+                  {incompleteCount} Incomplete Report{incompleteCount > 1 ? 's' : ''} - Complete within 24 hours!
+                </Badge>
+              </div>
+            )}
           </div>
         </div>
 
@@ -150,10 +193,34 @@ export default function EmergencyLogs() {
           </Card>
         </div>
 
+        {incompleteCount > 0 && (
+          <Card className="border-2 border-red-600 bg-red-50">
+            <CardContent className="py-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5 animate-pulse" />
+                <div>
+                  <p className="font-bold text-red-900 text-lg mb-2">
+                    ⚠️ URGENT: Incomplete Emergency Reports
+                  </p>
+                  <p className="text-sm text-red-800 mb-2">
+                    <strong>You have {incompleteCount} timestamped emergency report{incompleteCount > 1 ? 's' : ''} awaiting completion.</strong>
+                  </p>
+                  <p className="text-sm text-red-800">
+                    <strong className="underline">All emergency reports MUST be completed within 24 hours of creation or they will be VOIDED.</strong> Voided reports cannot be recovered and lose their legal timestamp validity for insurance claims.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Filters */}
         <Tabs value={filterStatus} onValueChange={setFilterStatus}>
           <TabsList className="bg-white">
             <TabsTrigger value="all">All Logs</TabsTrigger>
+            <TabsTrigger value="incomplete">
+              Incomplete {incompleteCount > 0 && `(${incompleteCount})`}
+            </TabsTrigger>
             <TabsTrigger value="unresolved">Unresolved</TabsTrigger>
             <TabsTrigger value="critical">Critical</TabsTrigger>
             <TabsTrigger value="resolved">Resolved</TabsTrigger>
@@ -162,10 +229,17 @@ export default function EmergencyLogs() {
 
         {/* Logs List */}
         <div className="space-y-4">
-          {filteredLogs.map(log => (
+          {filteredLogs.map(log => {
+            const isIncomplete = log.quick_description === "INCOMPLETE - AWAITING DETAILS";
+            const hoursRemaining = isIncomplete ? getTimeRemaining(log.timestamp) : null;
+            const isVoided = log.voided;
+            
+            return (
             <Card 
               key={log.id} 
               className={`border-l-4 cursor-pointer hover:shadow-lg transition-all ${
+                isVoided ? 'border-l-gray-400 opacity-60' :
+                isIncomplete ? 'border-l-red-600 bg-red-50' :
                 log.severity === 'critical' ? 'border-l-red-600' :
                 log.severity === 'high' ? 'border-l-orange-600' :
                 log.severity === 'medium' ? 'border-l-yellow-600' :
@@ -183,9 +257,20 @@ export default function EmergencyLogs() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {log.emergency_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </h3>
-                      <Badge className={severityColors[log.severity]}>
-                        {log.severity}
-                      </Badge>
+                      {isVoided ? (
+                        <Badge className="bg-gray-600 text-white">
+                          VOIDED
+                        </Badge>
+                      ) : isIncomplete ? (
+                        <Badge className="bg-red-600 text-white animate-pulse">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {hoursRemaining > 0 ? `${hoursRemaining.toFixed(1)}h remaining` : 'OVERDUE'}
+                        </Badge>
+                      ) : (
+                        <Badge className={severityColors[log.severity]}>
+                          {log.severity}
+                        </Badge>
+                      )}
                       {log.resolved && (
                         <Badge className="bg-green-600 text-white">
                           <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -200,7 +285,18 @@ export default function EmergencyLogs() {
                       )}
                     </div>
 
-                    <p className="text-gray-700 mb-3">{log.quick_description}</p>
+                    {isIncomplete && (
+                      <div className="bg-red-100 border-l-4 border-red-600 p-3 mb-3 rounded">
+                        <p className="text-sm font-bold text-red-900">
+                          ⚠️ INCOMPLETE REPORT - Must be filled within 24 hours or will be VOIDED
+                        </p>
+                        <p className="text-xs text-red-800 mt-1">
+                          Click to add details now. Time remaining: {hoursRemaining > 0 ? `${hoursRemaining.toFixed(1)} hours` : 'OVERDUE - Will void soon'}
+                        </p>
+                      </div>
+                    )}
+
+                    <p className={`mb-3 ${isVoided ? 'text-gray-500 line-through' : 'text-gray-700'}`}>{log.quick_description}</p>
 
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
@@ -225,7 +321,8 @@ export default function EmergencyLogs() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+          );
+          })}
         </div>
 
         {/* Edit Modal */}
@@ -236,11 +333,36 @@ export default function EmergencyLogs() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="w-5 h-5 text-red-600" />
-                    Emergency Log Details
+                    {selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS" ? "Complete Emergency Report" : "Emergency Log Details"}
                   </DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4">
+                  {selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS" && (
+                    <div className="bg-red-100 border-2 border-red-600 rounded-lg p-4">
+                      <p className="font-bold text-red-900 text-lg mb-2">
+                        ⚠️ URGENT: Complete This Report Within 24 Hours
+                      </p>
+                      <p className="text-sm text-red-800 mb-2">
+                        <strong>Time Remaining: {getTimeRemaining(selectedLog.timestamp).toFixed(1)} hours</strong>
+                      </p>
+                      <p className="text-sm text-red-800">
+                        <strong className="underline">This report will be VOIDED if not completed within 24 hours of creation.</strong> Fill out all required fields below to preserve the timestamp for insurance and legal purposes.
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedLog.voided && (
+                    <div className="bg-gray-100 border-2 border-gray-600 rounded-lg p-4">
+                      <p className="font-bold text-gray-900 text-lg mb-2">
+                        ⚠️ VOIDED REPORT
+                      </p>
+                      <p className="text-sm text-gray-800">
+                        This report was not completed within 24 hours and has been voided. It cannot be used for insurance claims or legal documentation.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="bg-gray-50 rounded-lg p-4 border">
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
@@ -264,15 +386,33 @@ export default function EmergencyLogs() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label>Initial Description</Label>
-                    <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
-                      {selectedLog.quick_description}
+                  {selectedLog.quick_description !== "INCOMPLETE - AWAITING DETAILS" && (
+                    <div>
+                      <Label>Initial Description</Label>
+                      <div className="bg-gray-50 rounded p-3 text-sm text-gray-700">
+                        {selectedLog.quick_description}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS" && (
+                    <div>
+                      <Label htmlFor="quick_description" className="text-red-700 font-bold">
+                        Emergency Description * (Required)
+                      </Label>
+                      <Textarea
+                        id="quick_description"
+                        value={editFormData.quick_description === "INCOMPLETE - AWAITING DETAILS" ? "" : (editFormData.quick_description || "")}
+                        onChange={(e) => setEditFormData({...editFormData, quick_description: e.target.value})}
+                        placeholder="What happened? Be specific for insurance and legal documentation..."
+                        rows={4}
+                        className="border-red-300"
+                      />
+                    </div>
+                  )}
 
                   <div>
-                    <Label htmlFor="detailed_notes">Detailed Notes (add more info)</Label>
+                    <Label htmlFor="detailed_notes">Detailed Notes</Label>
                     <Textarea
                       id="detailed_notes"
                       value={editFormData.detailed_notes || ""}
@@ -384,8 +524,12 @@ export default function EmergencyLogs() {
                   <Button variant="outline" onClick={() => setSelectedLog(null)}>
                     Cancel
                   </Button>
-                  <Button onClick={handleSaveDetails} className="bg-blue-600 hover:bg-blue-700">
-                    Save Details
+                  <Button 
+                    onClick={handleSaveDetails} 
+                    disabled={selectedLog.voided}
+                    className={selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}
+                  >
+                    {selectedLog.quick_description === "INCOMPLETE - AWAITING DETAILS" ? "Complete & File Report" : "Save Details"}
                   </Button>
                 </DialogFooter>
               </>
