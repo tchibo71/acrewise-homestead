@@ -53,6 +53,15 @@ export default function Dashboard() {
     initialData: { isPro: false }
   });
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user-dashboard'],
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return null;
+      return base44.auth.me();
+    },
+  });
+
   const { data: checklists = [] } = useQuery({
     queryKey: ['dashboard-checklists'],
     queryFn: async () => {
@@ -116,6 +125,9 @@ export default function Dashboard() {
 
         {/* Farm Health Score - visible to all users */}
         <FarmHealthScore />
+
+        {/* Draft Sync Manager - for offline entries */}
+        {user && <DraftSyncManager userEmail={user.email} />}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
