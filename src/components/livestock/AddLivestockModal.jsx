@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { logLivestockAdded } from "@/components/utils/farmHistoryLogger";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,9 @@ import {
   Heart, 
   DollarSign,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Save,
+  WifiOff
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -121,9 +124,37 @@ export default function AddLivestockModal({ onClose }) {
     return true;
   };
 
-  const handleSubmit = () => {
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const handleSubmit = async () => {
     if (!validateForm()) return;
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('livestock', formData, currentUser?.email);
+        alert("📱 Offline: Livestock saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     createMutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('livestock', formData, currentUser?.email);
+      alert("✅ Draft saved! Access from your Dashboard to sync later.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   const isStep1Valid = formData.name_or_tag && formData.animal_type && 
@@ -169,6 +200,15 @@ export default function AddLivestockModal({ onClose }) {
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{validationError}</AlertDescription>
           </Alert>
+        )}
+
+        {!isOnline() && (
+          <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+            <WifiOff className="w-5 h-5 text-orange-600" />
+            <p className="text-sm text-orange-800 font-medium">
+              Offline Mode - Will save as draft when submitted
+            </p>
+          </div>
         )}
 
         <div className="py-4 min-h-[300px]">
@@ -462,11 +502,17 @@ export default function AddLivestockModal({ onClose }) {
         </div>
 
         <DialogFooter className="flex justify-between gap-2">
-          <div>
+          <div className="flex gap-2">
             {currentStep > 1 && (
               <Button type="button" variant="outline" onClick={handleBack}>
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Back
+              </Button>
+            )}
+            {currentStep === 3 && (
+              <Button type="button" variant="outline" onClick={handleSaveDraft}>
+                <Save className="w-4 h-4 mr-2" />
+                Save Draft
               </Button>
             )}
           </div>

@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X, Calendar, Bell, Users } from "lucide-react";
+import { X, Calendar, Bell, Users, Save, WifiOff } from "lucide-react";
 import { addWeeks, addDays, format } from "date-fns";
 import { getCurrentSeason, getSeasonName, getAllSeasons } from "@/components/utils/seasonUtils";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 
 const categories = [
   "composting", "gardening", "raised_beds", "biointensive", 
@@ -129,12 +130,35 @@ export default function ChecklistForm({ task, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('checklist_item', formData, currentUser?.email);
+        alert("📱 Offline: Task saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     if (task) {
       updateMutation.mutate({ id: task.id, data: formData });
     } else {
       createMutation.mutate(formData);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('checklist_item', formData, currentUser?.email);
+      alert("✅ Draft saved! Access from your Dashboard to sync later.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
     }
   };
 
@@ -148,6 +172,16 @@ export default function ChecklistForm({ task, onClose }) {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {/* Offline Indicator */}
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Changes will be saved as draft
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="title">Task Title</Label>
             <Input
@@ -406,13 +440,19 @@ export default function ChecklistForm({ task, onClose }) {
             />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-3">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+        <CardFooter className="flex justify-between gap-3">
+          <Button type="button" variant="outline" onClick={handleSaveDraft}>
+            <Save className="w-4 h-4 mr-2" />
+            Save Draft
           </Button>
-          <Button type="submit" className="bg-green-600 hover:bg-green-700">
-            {task ? 'Update Task' : 'Create Task'}
-          </Button>
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" className="bg-green-600 hover:bg-green-700">
+              {task ? 'Update Task' : 'Create Task'}
+            </Button>
+          </div>
         </CardFooter>
       </form>
     </Card>

@@ -30,6 +30,7 @@ import FarmHealthScore from "../components/dashboard/FarmHealthScore";
 import { getCurrentSeason, getSeasonName, getSeasonEmoji } from "@/components/utils/seasonUtils";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
+import DraftSyncManager from "@/components/offline/DraftSyncManager";
 
 // Loading fallback component
 const CardSkeleton = () => (
@@ -115,6 +116,9 @@ export default function Dashboard() {
 
         {/* Farm Health Score - visible to all users */}
         <FarmHealthScore />
+
+        {/* Draft Sync Manager - for offline entries */}
+        {user && <DraftSyncManager userEmail={user.email} />}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

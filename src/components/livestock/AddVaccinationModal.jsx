@@ -1,14 +1,23 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
+import { Save, WifiOff } from "lucide-react";
+
 export default function AddVaccinationModal({ livestockId, onClose }) {
   const queryClient = useQueryClient();
+  
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const [formData, setFormData] = useState({
     livestock_id: livestockId,
     vaccine_name: "",
@@ -33,9 +42,32 @@ export default function AddVaccinationModal({ livestockId, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('vaccination', formData, currentUser?.email);
+        alert("📱 Offline: Vaccination saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     mutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('vaccination', formData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   return (
@@ -46,6 +78,15 @@ export default function AddVaccinationModal({ livestockId, onClose }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           <div>
             <Label>Vaccine Name *</Label>
             <Input
@@ -133,13 +174,19 @@ export default function AddVaccinationModal({ livestockId, onClose }) {
             />
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Adding..." : "Add Vaccination"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Adding..." : "Add Vaccination"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

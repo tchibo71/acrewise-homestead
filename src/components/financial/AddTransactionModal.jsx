@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,11 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Save, WifiOff } from "lucide-react";
 
 export default function AddTransactionModal({ onClose }) {
   const queryClient = useQueryClient();
   const [validationError, setValidationError] = useState("");
+
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
   const [formData, setFormData] = useState({
     transaction_type: "expense",
     category: "feed",
@@ -33,7 +39,7 @@ export default function AddTransactionModal({ onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationError("");
     
@@ -46,7 +52,31 @@ export default function AddTransactionModal({ onClose }) {
     }
     
     const submitData = { ...formData, amount };
+
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('financial_transaction', submitData, currentUser?.email);
+        alert("📱 Offline: Transaction saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+    
     createMutation.mutate(submitData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      const submitData = { ...formData };
+      await saveDraft('financial_transaction', submitData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   return (
@@ -64,6 +94,15 @@ export default function AddTransactionModal({ onClose }) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Type</Label>
@@ -187,17 +226,23 @@ export default function AddTransactionModal({ onClose }) {
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+          <DialogFooter className="flex justify-between">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending}
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              {createMutation.isPending ? "Adding..." : "Add Transaction"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {createMutation.isPending ? "Adding..." : "Add Transaction"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

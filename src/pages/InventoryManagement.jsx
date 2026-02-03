@@ -140,7 +140,7 @@ export default function InventoryManagement() {
               <p className="text-gray-600 mt-1">{inventory.length} items • {equipment.length} equipment</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={handleAddItem}
               className="bg-indigo-600 hover:bg-indigo-700"
@@ -152,6 +152,12 @@ export default function InventoryManagement() {
               <Button variant="outline">
                 <Wrench className="w-4 h-4 mr-2" />
                 Equipment
+              </Button>
+            </Link>
+            <Link to={createPageUrl("FarmStand") + `?farm=${encodeURIComponent(user?.email || '')}`} target="_blank">
+              <Button variant="outline" className="bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100">
+                <Package className="w-4 h-4 mr-2" />
+                My Farm Stand
               </Button>
             </Link>
           </div>
