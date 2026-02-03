@@ -19,6 +19,7 @@ import AddTransactionModal from "../components/financial/AddTransactionModal";
 import COGSCalculator from "../components/financial/COGSCalculator";
 import ExpenseParetoChart from "../components/financial/ExpenseParetoChart";
 import ProfitTimeSeriesChart from "../components/financial/ProfitTimeSeriesChart";
+import ROIAnalytics from "../components/harvest/ROIAnalytics";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
 
@@ -291,6 +292,9 @@ export default function FinancialManagement() {
 
         {/* COGS Profitability Indicator */}
         <COGSCalculator transactions={transactions} production={production} />
+
+        {/* ROI Analytics - Harvest to Finance Correlation */}
+        <ROIAnalytics />
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4">

@@ -20,6 +20,7 @@ import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import PaywallModal from "@/components/paywall/PaywallModal";
 import AddInventoryModal from "@/components/inventory/AddInventoryModal";
 import InventoryCard from "@/components/inventory/InventoryCard";
+import ConsumptionForecast from "@/components/consumption/ConsumptionForecast";
 
 export default function InventoryManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -206,6 +207,9 @@ export default function InventoryManagement() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Consumption Forecast */}
+        <ConsumptionForecast />
 
         {/* Alerts */}
         {(lowStockItems.length > 0 || expiringSoon.length > 0 || equipmentNeedingMaintenance.length > 0) && (

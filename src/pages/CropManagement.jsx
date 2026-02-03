@@ -20,12 +20,15 @@ import PaywallModal from "../components/paywall/PaywallModal";
 import AddCropPlanModal from "../components/farm-planning/AddCropPlanModal";
 import AddSoilTestModal from "../components/farm-planning/AddSoilTestModal";
 import AddPestManagementModal from "../components/farm-planning/AddPestManagementModal";
+import ROIAnalytics from "../components/harvest/ROIAnalytics";
+import AddHarvestModal from "../components/harvest/AddHarvestModal";
 
 export default function CropManagement() {
   const [activeSection, setActiveSection] = useState("crops");
   const [showCropModal, setShowCropModal] = useState(false);
   const [showSoilModal, setShowSoilModal] = useState(false);
   const [showPestModal, setShowPestModal] = useState(false);
+  const [showHarvestModal, setShowHarvestModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const queryClient = useQueryClient();
@@ -170,10 +173,14 @@ export default function CropManagement() {
           </Card>
         </div>
 
+        {/* ROI Analytics - Show harvest-to-revenue correlation */}
+        <ROIAnalytics />
+
         {/* Section Tabs */}
         <Tabs value={activeSection} onValueChange={setActiveSection}>
           <TabsList className="bg-white">
             <TabsTrigger value="crops">Crop Plans</TabsTrigger>
+            <TabsTrigger value="harvests">Harvest Records</TabsTrigger>
             <TabsTrigger value="soil">Soil Health</TabsTrigger>
             <TabsTrigger value="pest">Pest Management</TabsTrigger>
           </TabsList>
@@ -308,6 +315,28 @@ export default function CropManagement() {
           </div>
         )}
 
+        {/* Harvest Records Section */}
+        {activeSection === "harvests" && (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-900">Harvest Records & ROI Tracking</h2>
+              <Button onClick={() => { setEditingItem(null); setShowHarvestModal(true); }} className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Log Harvest
+              </Button>
+            </div>
+
+            <Card className="border-blue-300 bg-blue-50">
+              <CardContent className="py-4">
+                <p className="text-sm text-blue-800">
+                  <strong>💰 ROI Insights:</strong> Each harvest record calculates your return on investment automatically. 
+                  See detailed ROI analytics above to understand which crops are most profitable.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Pest Management Section */}
         {activeSection === "pest" && (
           <div className="space-y-4">
@@ -392,6 +421,13 @@ export default function CropManagement() {
           <AddPestManagementModal
             record={editingItem}
             onClose={() => { setShowPestModal(false); setEditingItem(null); }}
+          />
+        )}
+
+        {showHarvestModal && (
+          <AddHarvestModal
+            harvest={editingItem}
+            onClose={() => { setShowHarvestModal(false); setEditingItem(null); }}
           />
         )}
       </div>
