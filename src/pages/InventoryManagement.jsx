@@ -163,12 +163,14 @@ export default function InventoryManagement() {
                 Equipment
               </Button>
             </Link>
-            <Link to={createPageUrl("FarmStand") + `?farm=${encodeURIComponent(user?.email || '')}`} target="_blank">
-              <Button variant="outline" className="bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100">
-                <Package className="w-4 h-4 mr-2" />
-                My Farm Stand
-              </Button>
-            </Link>
+            {user && (
+              <Link to={createPageUrl("FarmStand") + `?farm=${encodeURIComponent(user.email)}`} target="_blank">
+                <Button variant="outline" className="bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100">
+                  <Package className="w-4 h-4 mr-2" />
+                  My Farm Stand
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
