@@ -41,6 +41,8 @@ import { useQuery } from "@tanstack/react-query";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 
 import { User } from "lucide-react";
+import EmergencyButton from "@/components/emergency/EmergencyButton";
+import OfflineIndicator from "@/components/offline/OfflineIndicator";
 
 const navigationItems = [
   {
@@ -109,7 +111,13 @@ const navigationItems = [
     url: createPageUrl("Pricing"),
     icon: Crown,
   },
-];
+  {
+    title: "Emergency Logs",
+    url: createPageUrl("EmergencyLogs"),
+    icon: AlertTriangle,
+    proOnly: true,
+  },
+  ];
 
 const operationsItems = [
   {
@@ -443,8 +451,14 @@ export default function Layout({ children, currentPageName }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="flex-1 flex flex-col">
-          {/* Mobile Header - visible below 1024px */}
+        <main className="flex-1 flex flex-col relative">
+                  {/* Offline Indicator */}
+                  <OfflineIndicator userEmail={subscriptionData?.subscription?.created_by} />
+
+                  {/* Emergency Button - Available on all pages */}
+                  <EmergencyButton />
+
+                  {/* Mobile Header - visible below 1024px */}
           <header className="bg-white/80 backdrop-blur-sm border-b border-green-200 px-4 py-3 lg:hidden sticky top-0 z-10">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
