@@ -1,69 +1,124 @@
-import Dashboard from './pages/Dashboard';
-import Guides from './pages/Guides';
-import GuideDetail from './pages/GuideDetail';
+/**
+ * pages.config.js - Page routing configuration
+ * 
+ * This file is AUTO-GENERATED. Do not add imports or modify PAGES manually.
+ * Pages are auto-registered when you create files in the ./pages/ folder.
+ * 
+ * THE ONLY EDITABLE VALUE: mainPage
+ * This controls which page is the landing page (shown when users visit the app).
+ * 
+ * Example file structure:
+ * 
+ *   import HomePage from './pages/HomePage';
+ *   import Dashboard from './pages/Dashboard';
+ *   import Settings from './pages/Settings';
+ *   
+ *   export const PAGES = {
+ *       "HomePage": HomePage,
+ *       "Dashboard": Dashboard,
+ *       "Settings": Settings,
+ *   }
+ *   
+ *   export const pagesConfig = {
+ *       mainPage: "HomePage",
+ *       Pages: PAGES,
+ *   };
+ * 
+ * Example with Layout (wraps all pages):
+ *
+ *   import Home from './pages/Home';
+ *   import Settings from './pages/Settings';
+ *   import __Layout from './Layout.jsx';
+ *
+ *   export const PAGES = {
+ *       "Home": Home,
+ *       "Settings": Settings,
+ *   }
+ *
+ *   export const pagesConfig = {
+ *       mainPage: "Home",
+ *       Pages: PAGES,
+ *       Layout: __Layout,
+ *   };
+ *
+ * To change the main page from HomePage to Dashboard, use find_replace:
+ *   Old: mainPage: "HomePage",
+ *   New: mainPage: "Dashboard",
+ *
+ * The mainPage value must match a key in the PAGES object exactly.
+ */
+import AIScenarioAnalysis from './pages/AIScenarioAnalysis';
 import Checklists from './pages/Checklists';
-import Forum from './pages/Forum';
-import ForumPost from './pages/ForumPost';
-import Pricing from './pages/Pricing';
-import LivestockManagement from './pages/LivestockManagement';
-import FinancialManagement from './pages/FinancialManagement';
-import FarmPlanDashboard from './pages/FarmPlanDashboard';
-import FarmProfile from './pages/FarmProfile';
+import CropManagement from './pages/CropManagement';
+import DairyProduction from './pages/DairyProduction';
+import Dashboard from './pages/Dashboard';
+import EquipmentManagement from './pages/EquipmentManagement';
 import FarmGoals from './pages/FarmGoals';
 import FarmHistory from './pages/FarmHistory';
-import MaintenancePlanning from './pages/MaintenancePlanning';
-import FinancialPlanning from './pages/FinancialPlanning';
-import CropManagement from './pages/CropManagement';
-import MarketingPlanning from './pages/MarketingPlanning';
-import FinancialReports from './pages/FinancialReports';
-import LivestockDetail from './pages/LivestockDetail';
-import FermentationTracking from './pages/FermentationTracking';
+import FarmPlanDashboard from './pages/FarmPlanDashboard';
+import FarmProfile from './pages/FarmProfile';
 import FermentationDetail from './pages/FermentationDetail';
-import PropertyMap from './pages/PropertyMap';
-import OrchardManagement from './pages/OrchardManagement';
-import WeatherDashboard from './pages/WeatherDashboard';
+import FermentationTracking from './pages/FermentationTracking';
+import FinancialManagement from './pages/FinancialManagement';
+import FinancialPlanning from './pages/FinancialPlanning';
+import FinancialReports from './pages/FinancialReports';
+import Forum from './pages/Forum';
+import ForumPost from './pages/ForumPost';
+import GuideDetail from './pages/GuideDetail';
+import Guides from './pages/Guides';
+import Home from './pages/Home';
 import InventoryManagement from './pages/InventoryManagement';
-import EquipmentManagement from './pages/EquipmentManagement';
-import UserSettings from './pages/UserSettings';
-import ReferralProgram from './pages/ReferralProgram';
-import DairyProduction from './pages/DairyProduction';
-import AIScenarioAnalysis from './pages/AIScenarioAnalysis';
+import LivestockDetail from './pages/LivestockDetail';
+import LivestockManagement from './pages/LivestockManagement';
+import MaintenancePlanning from './pages/MaintenancePlanning';
+import MarketingPlanning from './pages/MarketingPlanning';
 import MyTasks from './pages/MyTasks';
+import OrchardManagement from './pages/OrchardManagement';
+import Pricing from './pages/Pricing';
+import PropertyMap from './pages/PropertyMap';
+import ReferralProgram from './pages/ReferralProgram';
+import UserSettings from './pages/UserSettings';
+import WeatherDashboard from './pages/WeatherDashboard';
+import FarmStand from './pages/FarmStand';
+import EmergencyLogs from './pages/EmergencyLogs';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Guides": Guides,
-    "GuideDetail": GuideDetail,
+    "AIScenarioAnalysis": AIScenarioAnalysis,
     "Checklists": Checklists,
-    "Forum": Forum,
-    "ForumPost": ForumPost,
-    "Pricing": Pricing,
-    "LivestockManagement": LivestockManagement,
-    "FinancialManagement": FinancialManagement,
-    "FarmPlanDashboard": FarmPlanDashboard,
-    "FarmProfile": FarmProfile,
+    "CropManagement": CropManagement,
+    "DairyProduction": DairyProduction,
+    "Dashboard": Dashboard,
+    "EquipmentManagement": EquipmentManagement,
     "FarmGoals": FarmGoals,
     "FarmHistory": FarmHistory,
-    "MaintenancePlanning": MaintenancePlanning,
-    "FinancialPlanning": FinancialPlanning,
-    "CropManagement": CropManagement,
-    "MarketingPlanning": MarketingPlanning,
-    "FinancialReports": FinancialReports,
-    "LivestockDetail": LivestockDetail,
-    "FermentationTracking": FermentationTracking,
+    "FarmPlanDashboard": FarmPlanDashboard,
+    "FarmProfile": FarmProfile,
     "FermentationDetail": FermentationDetail,
-    "PropertyMap": PropertyMap,
-    "OrchardManagement": OrchardManagement,
-    "WeatherDashboard": WeatherDashboard,
+    "FermentationTracking": FermentationTracking,
+    "FinancialManagement": FinancialManagement,
+    "FinancialPlanning": FinancialPlanning,
+    "FinancialReports": FinancialReports,
+    "Forum": Forum,
+    "ForumPost": ForumPost,
+    "GuideDetail": GuideDetail,
+    "Guides": Guides,
+    "Home": Home,
     "InventoryManagement": InventoryManagement,
-    "EquipmentManagement": EquipmentManagement,
-    "UserSettings": UserSettings,
-    "ReferralProgram": ReferralProgram,
-    "DairyProduction": DairyProduction,
-    "AIScenarioAnalysis": AIScenarioAnalysis,
+    "LivestockDetail": LivestockDetail,
+    "LivestockManagement": LivestockManagement,
+    "MaintenancePlanning": MaintenancePlanning,
+    "MarketingPlanning": MarketingPlanning,
     "MyTasks": MyTasks,
+    "OrchardManagement": OrchardManagement,
+    "Pricing": Pricing,
+    "PropertyMap": PropertyMap,
+    "ReferralProgram": ReferralProgram,
+    "UserSettings": UserSettings,
+    "WeatherDashboard": WeatherDashboard,
+    "FarmStand": FarmStand,
+    "EmergencyLogs": EmergencyLogs,
 }
 
 export const pagesConfig = {
