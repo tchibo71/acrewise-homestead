@@ -117,9 +117,6 @@ export default function Dashboard() {
         {/* Farm Health Score - visible to all users */}
         <FarmHealthScore />
 
-        {/* Draft Sync Manager - for offline entries */}
-        {user && <DraftSyncManager userEmail={user.email} />}
-
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
