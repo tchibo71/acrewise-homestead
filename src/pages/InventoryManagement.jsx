@@ -34,6 +34,15 @@ export default function InventoryManagement() {
     initialData: { isPro: false }
   });
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) return null;
+      return base44.auth.me();
+    },
+  });
+
   const { data: inventory = [], isLoading } = useQuery({
     queryKey: ['inventory'],
     queryFn: () => base44.entities.InventoryItem.list('-created_date'),

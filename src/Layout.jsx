@@ -20,7 +20,9 @@ import {
   Wrench,
   Milk,
   Gift,
-  Sparkles
+  Sparkles,
+  ShoppingBag,
+  AlertTriangle
 } from "lucide-react";
 import {
   Sidebar,
@@ -142,6 +144,12 @@ const operationsItems = [
     title: "Inventory",
     url: createPageUrl("InventoryManagement"),
     icon: Package,
+    proOnly: true,
+  },
+  {
+    title: "Farm Stand",
+    url: createPageUrl("ManageMarketplace"),
+    icon: ShoppingBag,
     proOnly: true,
   },
 ];

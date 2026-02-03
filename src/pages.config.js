@@ -81,6 +81,7 @@ import UserSettings from './pages/UserSettings';
 import WeatherDashboard from './pages/WeatherDashboard';
 import FarmStand from './pages/FarmStand';
 import EmergencyLogs from './pages/EmergencyLogs';
+import ManageMarketplace from './pages/ManageMarketplace';
 import __Layout from './Layout.jsx';
 
 
@@ -119,6 +120,7 @@ export const PAGES = {
     "WeatherDashboard": WeatherDashboard,
     "FarmStand": FarmStand,
     "EmergencyLogs": EmergencyLogs,
+    "ManageMarketplace": ManageMarketplace,
 }
 
 export const pagesConfig = {
