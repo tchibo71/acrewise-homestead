@@ -67,10 +67,6 @@ export default function Forum() {
   };
 
   const handleCreatePost = () => {
-    if (!subscriptionData.isPro) {
-      setShowPaywall(true);
-      return;
-    }
     setShowCreateModal(true);
   };
 
@@ -108,9 +104,7 @@ export default function Forum() {
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Community Forum</h1>
               <p className="text-gray-600 mt-1">
-                {subscriptionData.isPro 
-                  ? "Share experiences, ask questions, learn together" 
-                  : "Read-only preview mode - Upgrade to participate"}
+                Share experiences, ask questions, learn together
               </p>
             </div>
           </div>
@@ -120,34 +114,10 @@ export default function Forum() {
           >
             <Plus className="w-4 h-4 mr-2" />
             New Post
-            {!subscriptionData.isPro && <Crown className="w-4 h-4 ml-2" />}
           </Button>
         </div>
 
-        {!subscriptionData.isPro && (
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Crown className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-purple-900 mb-1">
-                  Read-Only Forum Access
-                </h3>
-                <p className="text-sm text-purple-700 mb-3">
-                  You can browse posts and learn from the community. Upgrade to Pro to create posts, comment, and upvote.
-                </p>
-                <Button
-                  size="sm"
-                  onClick={() => navigate(createPageUrl("Pricing"))}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  Upgrade to Participate
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="border-none shadow-md bg-white/80 backdrop-blur-sm">

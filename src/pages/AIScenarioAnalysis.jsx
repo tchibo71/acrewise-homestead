@@ -74,6 +74,8 @@ export default function AIScenarioAnalysis() {
   const [showDisclaimerDialog, setShowDisclaimerDialog] = useState(false);
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const [showFirstTimeDisclaimer, setShowFirstTimeDisclaimer] = useState(false);
+  const [hasAcceptedFirstTime, setHasAcceptedFirstTime] = useState(false);
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
@@ -95,6 +97,24 @@ export default function AIScenarioAnalysis() {
     },
     enabled: subscriptionData.isPro
   });
+
+  // Check if user has already accepted disclaimer
+  const { data: userDisclaimers = [] } = useQuery({
+    queryKey: ['user-disclaimers', user?.email],
+    queryFn: async () => {
+      if (!user?.email) return [];
+      const allDisclaimers = await base44.entities.DisclaimerAcceptance.list();
+      return allDisclaimers.filter(d => d.user_email === user.email);
+    },
+    enabled: subscriptionData.isPro && !!user?.email
+  });
+
+  // Check on component mount if user needs to see first-time disclaimer
+  React.useEffect(() => {
+    if (subscriptionData.isPro && user?.email && userDisclaimers.length === 0 && !hasAcceptedFirstTime) {
+      setShowFirstTimeDisclaimer(true);
+    }
+  }, [subscriptionData.isPro, user?.email, userDisclaimers, hasAcceptedFirstTime]);
 
   const createAnalysisMutation = useMutation({
     mutationFn: (data) => base44.entities.ScenarioAnalysis.create(data),
@@ -157,6 +177,13 @@ export default function AIScenarioAnalysis() {
       return;
     }
 
+    // Check if first-time disclaimer needs to be shown
+    if (!hasAcceptedFirstTime && userDisclaimers.length === 0) {
+      setPendingAnalysis({ title, scenario, uploadedFiles });
+      setShowFirstTimeDisclaimer(true);
+      return;
+    }
+
     const containsCriminal = checkForCriminalContent(scenario);
     
     if (containsCriminal) {
@@ -166,6 +193,49 @@ export default function AIScenarioAnalysis() {
     }
 
     await proceedWithGeneration(false);
+  };
+
+  const handleAcceptFirstTimeDisclaimer = async () => {
+    try {
+      const disclaimerExpiresDate = new Date();
+      // If user is subscribed, store indefinitely (far future date)
+      // If not subscribed or unsubscribes, will be 1 year from acceptance
+      if (subscriptionData.isPro) {
+        disclaimerExpiresDate.setFullYear(disclaimerExpiresDate.getFullYear() + 50); // Indefinite
+      } else {
+        disclaimerExpiresDate.setFullYear(disclaimerExpiresDate.getFullYear() + 1);
+      }
+
+      await createDisclaimerMutation.mutateAsync({
+        scenario_analysis_id: "first_time_acceptance",
+        disclaimer_text: TENNESSEE_DISCLAIMER,
+        user_email: user.email,
+        acceptance_timestamp: new Date().toISOString(),
+        scenario_summary: "Initial disclaimer acceptance for AI Scenario Analysis feature",
+        expires_date: disclaimerExpiresDate.toISOString().split('T')[0]
+      });
+
+      setHasAcceptedFirstTime(true);
+      setShowFirstTimeDisclaimer(false);
+
+      // If there was a pending analysis, continue with it
+      if (pendingAnalysis) {
+        setTitle(pendingAnalysis.title);
+        setScenario(pendingAnalysis.scenario);
+        setUploadedFiles(pendingAnalysis.uploadedFiles);
+        setPendingAnalysis(null);
+        // Recheck for criminal content
+        const containsCriminal = checkForCriminalContent(pendingAnalysis.scenario);
+        if (containsCriminal) {
+          setShowWarningDialog(true);
+        } else {
+          await proceedWithGeneration(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save disclaimer acceptance:", error);
+      alert("Failed to save disclaimer acceptance");
+    }
   };
 
   // Fetch advice templates
@@ -920,6 +990,71 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
                     I Accept and Proceed
                   </>
                 )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* First-Time Disclaimer Dialog */}
+        <Dialog open={showFirstTimeDisclaimer} onOpenChange={(open) => {
+          if (!open) {
+            setShowFirstTimeDisclaimer(false);
+            setPendingAnalysis(null);
+          }
+        }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-700">
+                <Shield className="w-6 h-6" />
+                AI Scenario Analysis - Required Disclaimer
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-orange-50 border-2 border-orange-400 rounded-lg p-4">
+                <p className="text-orange-900 font-bold text-center">
+                  Before using AI Scenario Analysis, you must read and accept this disclaimer
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-300 rounded-lg p-6 max-h-96 overflow-y-auto text-sm whitespace-pre-wrap font-mono">
+                {TENNESSEE_DISCLAIMER}
+              </div>
+
+              <div className="flex items-start gap-3 bg-gray-50 border border-gray-300 rounded-lg p-4">
+                <Checkbox
+                  id="accept-first-time"
+                  checked={disclaimerAccepted}
+                  onCheckedChange={setDisclaimerAccepted}
+                />
+                <label htmlFor="accept-first-time" className="text-sm text-gray-700 cursor-pointer">
+                  <strong>I have read, understood, and agree to be bound by all terms of this disclaimer.</strong>
+                  <br />
+                  I acknowledge that Tennessee State Law will govern any disputes and that my acceptance will be recorded.
+                  <br />
+                  I accept full responsibility for any actions I take based on analyses provided.
+                </label>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowFirstTimeDisclaimer(false);
+                  setDisclaimerAccepted(false);
+                  setPendingAnalysis(null);
+                }}
+                className="w-full sm:w-auto"
+              >
+                Decline & Exit
+              </Button>
+              <Button
+                onClick={handleAcceptFirstTimeDisclaimer}
+                disabled={!disclaimerAccepted}
+                className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                I Accept and Continue
               </Button>
             </DialogFooter>
           </DialogContent>

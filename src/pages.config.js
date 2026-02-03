@@ -52,11 +52,13 @@ import Checklists from './pages/Checklists';
 import CropManagement from './pages/CropManagement';
 import DairyProduction from './pages/DairyProduction';
 import Dashboard from './pages/Dashboard';
+import EmergencyLogs from './pages/EmergencyLogs';
 import EquipmentManagement from './pages/EquipmentManagement';
 import FarmGoals from './pages/FarmGoals';
 import FarmHistory from './pages/FarmHistory';
 import FarmPlanDashboard from './pages/FarmPlanDashboard';
 import FarmProfile from './pages/FarmProfile';
+import FarmStand from './pages/FarmStand';
 import FermentationDetail from './pages/FermentationDetail';
 import FermentationTracking from './pages/FermentationTracking';
 import FinancialManagement from './pages/FinancialManagement';
@@ -71,6 +73,7 @@ import InventoryManagement from './pages/InventoryManagement';
 import LivestockDetail from './pages/LivestockDetail';
 import LivestockManagement from './pages/LivestockManagement';
 import MaintenancePlanning from './pages/MaintenancePlanning';
+import ManageMarketplace from './pages/ManageMarketplace';
 import MarketingPlanning from './pages/MarketingPlanning';
 import MyTasks from './pages/MyTasks';
 import OrchardManagement from './pages/OrchardManagement';
@@ -79,9 +82,6 @@ import PropertyMap from './pages/PropertyMap';
 import ReferralProgram from './pages/ReferralProgram';
 import UserSettings from './pages/UserSettings';
 import WeatherDashboard from './pages/WeatherDashboard';
-import FarmStand from './pages/FarmStand';
-import EmergencyLogs from './pages/EmergencyLogs';
-import ManageMarketplace from './pages/ManageMarketplace';
 import __Layout from './Layout.jsx';
 
 
@@ -91,11 +91,13 @@ export const PAGES = {
     "CropManagement": CropManagement,
     "DairyProduction": DairyProduction,
     "Dashboard": Dashboard,
+    "EmergencyLogs": EmergencyLogs,
     "EquipmentManagement": EquipmentManagement,
     "FarmGoals": FarmGoals,
     "FarmHistory": FarmHistory,
     "FarmPlanDashboard": FarmPlanDashboard,
     "FarmProfile": FarmProfile,
+    "FarmStand": FarmStand,
     "FermentationDetail": FermentationDetail,
     "FermentationTracking": FermentationTracking,
     "FinancialManagement": FinancialManagement,
@@ -110,6 +112,7 @@ export const PAGES = {
     "LivestockDetail": LivestockDetail,
     "LivestockManagement": LivestockManagement,
     "MaintenancePlanning": MaintenancePlanning,
+    "ManageMarketplace": ManageMarketplace,
     "MarketingPlanning": MarketingPlanning,
     "MyTasks": MyTasks,
     "OrchardManagement": OrchardManagement,
@@ -118,9 +121,6 @@ export const PAGES = {
     "ReferralProgram": ReferralProgram,
     "UserSettings": UserSettings,
     "WeatherDashboard": WeatherDashboard,
-    "FarmStand": FarmStand,
-    "EmergencyLogs": EmergencyLogs,
-    "ManageMarketplace": ManageMarketplace,
 }
 
 export const pagesConfig = {
