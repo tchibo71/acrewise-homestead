@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Save, WifiOff } from "lucide-react";
 
 export default function AddProductionModal({ livestockId, onClose }) {
   const queryClient = useQueryClient();
   const [validationError, setValidationError] = useState("");
+  
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const [formData, setFormData] = useState({
     production_type: "eggs",
     livestock_id: livestockId || "",
@@ -54,12 +61,12 @@ export default function AddProductionModal({ livestockId, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationError("");
 
     const quantity = parseFloat(formData.quantity);
-    
+
     // Validate quantity is numerical and positive
     if (isNaN(quantity) || quantity <= 0) {
       setValidationError("Quantity must be a valid number greater than zero.");
@@ -79,7 +86,29 @@ export default function AddProductionModal({ livestockId, onClose }) {
       return;
     }
 
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('production', formData, currentUser?.email);
+        alert("📱 Offline: Production record saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     mutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('production', formData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   return (
@@ -97,6 +126,15 @@ export default function AddProductionModal({ livestockId, onClose }) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           <div>
             <Label>Production Type *</Label>
             <Select
@@ -205,13 +243,19 @@ export default function AddProductionModal({ livestockId, onClose }) {
             />
           </div>
 
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+          <div className="flex justify-between gap-3">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "Adding..." : "Add Record"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending ? "Adding..." : "Add Record"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

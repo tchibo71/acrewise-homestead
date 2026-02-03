@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,17 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Save, WifiOff } from "lucide-react";
 
 export default function AddMilkProductionModal({ livestock, onClose }) {
   const queryClient = useQueryClient();
   const [unit, setUnit] = useState("lbs");
+  
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const [formData, setFormData] = useState({
     livestock_id: livestock[0]?.id || "",
     production_date: new Date().toISOString().split('T')[0],
@@ -61,9 +69,32 @@ export default function AddMilkProductionModal({ livestock, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('milk_production', formData, currentUser?.email);
+        alert("📱 Offline: Milk production saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     createMutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('milk_production', formData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   return (
@@ -74,6 +105,15 @@ export default function AddMilkProductionModal({ livestock, onClose }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           {/* Basic Info */}
           <div className="grid md:grid-cols-2 gap-4">
             <div>

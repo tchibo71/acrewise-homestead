@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tantml/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +9,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Save, WifiOff } from "lucide-react";
 
 export default function AddFermentationModal({ batch, onClose }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("basic");
+  
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const [formData, setFormData] = useState({
     batch_name: "",
     fermentation_type: "sauerkraut",
@@ -85,9 +92,32 @@ export default function AddFermentationModal({ batch, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('fermentation_batch', formData, currentUser?.email);
+        alert("📱 Offline: Fermentation batch saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     mutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('fermentation_batch', formData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   const addIngredient = () => {
@@ -149,6 +179,15 @@ export default function AddFermentationModal({ batch, onClose }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2 mb-4">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -527,13 +566,19 @@ export default function AddFermentationModal({ batch, onClose }) {
             </TabsContent>
           </Tabs>
 
-          <div className="flex justify-end gap-3 mt-6">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+          <div className="flex justify-between gap-3 mt-6">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
             </Button>
-            <Button type="submit" disabled={mutation.isPending} className="bg-amber-600 hover:bg-amber-700">
-              {mutation.isPending ? "Saving..." : batch ? "Update Batch" : "Create Batch"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={mutation.isPending} className="bg-amber-600 hover:bg-amber-700">
+                {mutation.isPending ? "Saving..." : batch ? "Update Batch" : "Create Batch"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>

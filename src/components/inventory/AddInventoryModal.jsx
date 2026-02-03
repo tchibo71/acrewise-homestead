@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Save, WifiOff } from "lucide-react";
 
 export default function AddInventoryModal({ onClose }) {
   const queryClient = useQueryClient();
+  
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const [formData, setFormData] = useState({
     item_name: "",
     category: "feed",
@@ -57,9 +65,32 @@ export default function AddInventoryModal({ onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check if online
+    if (!isOnline()) {
+      try {
+        await saveDraft('inventory_item', formData, currentUser?.email);
+        alert("📱 Offline: Inventory saved as draft. Will sync when online.");
+        onClose();
+      } catch (error) {
+        alert("Failed to save draft offline");
+      }
+      return;
+    }
+
     createMutation.mutate(formData);
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      await saveDraft('inventory_item', formData, currentUser?.email);
+      alert("✅ Draft saved! Will sync when online.");
+      onClose();
+    } catch (error) {
+      alert("Failed to save draft");
+    }
   };
 
   return (
@@ -70,6 +101,15 @@ export default function AddInventoryModal({ onClose }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
+          {!isOnline() && (
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-3 flex items-center gap-2 mb-4">
+              <WifiOff className="w-5 h-5 text-orange-600" />
+              <p className="text-sm text-orange-800 font-medium">
+                Offline Mode - Will save as draft
+              </p>
+            </div>
+          )}
+
           <Tabs defaultValue="basic">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -333,17 +373,23 @@ export default function AddInventoryModal({ onClose }) {
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+          <DialogFooter className="mt-6 flex justify-between">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
             </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {createMutation.isPending ? "Adding..." : "Add Item"}
-            </Button>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={createMutation.isPending}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {createMutation.isPending ? "Adding..." : "Add Item"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
