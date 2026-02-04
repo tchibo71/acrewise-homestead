@@ -45,6 +45,7 @@ import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import { User } from "lucide-react";
 import EmergencyButton from "@/components/emergency/EmergencyButton";
 import OfflineIndicator from "@/components/offline/OfflineIndicator";
+import BackgroundSyncWorker from "@/components/offline/BackgroundSyncWorker";
 
 const navigationItems = [
   {
@@ -460,6 +461,12 @@ export default function Layout({ children, currentPageName }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col relative">
+                  {/* Background Sync Worker - Invisible, runs every 30s */}
+                  <BackgroundSyncWorker 
+                    userEmail={subscriptionData?.subscription?.created_by}
+                    enabled={true}
+                  />
+
                   {/* Offline Indicator */}
                   <OfflineIndicator userEmail={subscriptionData?.subscription?.created_by} />
 
