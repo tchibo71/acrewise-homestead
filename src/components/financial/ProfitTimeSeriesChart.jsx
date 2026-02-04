@@ -4,52 +4,64 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { TrendingUp } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
 
-export default function ProfitTimeSeriesChart({ transactions }) {
-  // Generate last 12 months
-  const months = [];
-  const now = new Date();
-  for (let i = 11; i >= 0; i--) {
-    const monthDate = subMonths(now, i);
-    months.push({
-      date: monthDate,
-      label: format(monthDate, 'MMM'),
-      fullLabel: format(monthDate, 'MMM yyyy'),
-      start: startOfMonth(monthDate),
-      end: endOfMonth(monthDate)
+export default React.memo(function ProfitTimeSeriesChart({ transactions }) {
+  // Memoize expensive date calculations
+  const { monthlyData, avgProfit, maxProfit, minProfit, hasData } = React.useMemo(() => {
+    // Generate last 12 months
+    const months = [];
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const monthDate = subMonths(now, i);
+      months.push({
+        date: monthDate,
+        label: format(monthDate, 'MMM'),
+        fullLabel: format(monthDate, 'MMM yyyy'),
+        start: startOfMonth(monthDate),
+        end: endOfMonth(monthDate)
+      });
+    }
+
+    // Calculate monthly income/expense
+    const data = months.map(month => {
+      const monthTransactions = transactions.filter(tx => {
+        if (!tx.transaction_date) return false;
+        const txDate = parseISO(tx.transaction_date);
+        return isWithinInterval(txDate, { start: month.start, end: month.end });
+      });
+
+      const income = monthTransactions
+        .filter(t => t.transaction_type === "income")
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      const expenses = monthTransactions
+        .filter(t => t.transaction_type === "expense")
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      const netProfit = income - expenses;
+
+      return {
+        month: month.label,
+        fullMonth: month.fullLabel,
+        income,
+        expenses,
+        netProfit,
+        isProfit: netProfit >= 0
+      };
     });
-  }
 
-  // Calculate monthly income/expense
-  const monthlyData = months.map(month => {
-    const monthTransactions = transactions.filter(tx => {
-      if (!tx.transaction_date) return false;
-      const txDate = parseISO(tx.transaction_date);
-      return isWithinInterval(txDate, { start: month.start, end: month.end });
-    });
+    const avg = data.reduce((sum, m) => sum + m.netProfit, 0) / 12;
+    const max = Math.max(...data.map(m => m.netProfit));
+    const min = Math.min(...data.map(m => m.netProfit));
+    const dataExists = data.some(m => m.income > 0 || m.expenses > 0);
 
-    const income = monthTransactions
-      .filter(t => t.transaction_type === "income")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const expenses = monthTransactions
-      .filter(t => t.transaction_type === "expense")
-      .reduce((sum, t) => sum + (t.amount || 0), 0);
-
-    const netProfit = income - expenses;
-
-    return {
-      month: month.label,
-      fullMonth: month.fullLabel,
-      income,
-      expenses,
-      netProfit,
-      isProfit: netProfit >= 0
+    return { 
+      monthlyData: data, 
+      avgProfit: avg, 
+      maxProfit: max, 
+      minProfit: min,
+      hasData: dataExists
     };
-  });
-
-  const avgProfit = monthlyData.reduce((sum, m) => sum + m.netProfit, 0) / 12;
-  const maxProfit = Math.max(...monthlyData.map(m => m.netProfit));
-  const minProfit = Math.min(...monthlyData.map(m => m.netProfit));
+  }, [transactions]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -75,8 +87,6 @@ export default function ProfitTimeSeriesChart({ transactions }) {
     }
     return null;
   };
-
-  const hasData = monthlyData.some(m => m.income > 0 || m.expenses > 0);
 
   if (!hasData) {
     return (
@@ -183,4 +193,4 @@ export default function ProfitTimeSeriesChart({ transactions }) {
       </CardContent>
     </Card>
   );
-}
+});

@@ -29,48 +29,53 @@ const categoryColors = [
   "#f43f5e"  // rose
 ];
 
-export default function ExpenseParetoChart({ transactions }) {
-  // Filter only expenses
-  const expenses = transactions.filter(t => t.transaction_type === "expense");
-  
-  // Group by category
-  const categoryTotals = {};
-  expenses.forEach(tx => {
-    const cat = tx.category || "other";
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + (tx.amount || 0);
-  });
-
-  // Sort by amount descending
-  const sortedCategories = Object.entries(categoryTotals)
-    .sort((a, b) => b[1] - a[1]);
-
-  const totalExpenses = sortedCategories.reduce((sum, [_, amt]) => sum + amt, 0);
-
-  // Calculate cumulative percentage for Pareto
-  let cumulative = 0;
-  const paretoData = sortedCategories.slice(0, 5).map(([category, amount], idx) => {
-    cumulative += amount;
-    return {
-      category: categoryLabels[category] || category,
-      amount,
-      percentage: (amount / totalExpenses) * 100,
-      cumulative: (cumulative / totalExpenses) * 100,
-      color: categoryColors[idx]
-    };
-  });
-
-  // Add "Others" if there are more categories
-  if (sortedCategories.length > 5) {
-    const othersTotal = sortedCategories.slice(5).reduce((sum, [_, amt]) => sum + amt, 0);
-    cumulative += othersTotal;
-    paretoData.push({
-      category: "Others",
-      amount: othersTotal,
-      percentage: (othersTotal / totalExpenses) * 100,
-      cumulative: 100,
-      color: "#9ca3af"
+export default React.memo(function ExpenseParetoChart({ transactions }) {
+  // Memoize expensive calculations
+  const paretoData = React.useMemo(() => {
+    // Filter only expenses
+    const expenses = transactions.filter(t => t.transaction_type === "expense");
+    
+    // Group by category
+    const categoryTotals = {};
+    expenses.forEach(tx => {
+      const cat = tx.category || "other";
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + (tx.amount || 0);
     });
-  }
+
+    // Sort by amount descending
+    const sortedCategories = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1]);
+
+    const totalExpenses = sortedCategories.reduce((sum, [_, amt]) => sum + amt, 0);
+
+    // Calculate cumulative percentage for Pareto
+    let cumulative = 0;
+    const data = sortedCategories.slice(0, 5).map(([category, amount], idx) => {
+      cumulative += amount;
+      return {
+        category: categoryLabels[category] || category,
+        amount,
+        percentage: (amount / totalExpenses) * 100,
+        cumulative: (cumulative / totalExpenses) * 100,
+        color: categoryColors[idx]
+      };
+    });
+
+    // Add "Others" if there are more categories
+    if (sortedCategories.length > 5) {
+      const othersTotal = sortedCategories.slice(5).reduce((sum, [_, amt]) => sum + amt, 0);
+      cumulative += othersTotal;
+      data.push({
+        category: "Others",
+        amount: othersTotal,
+        percentage: (othersTotal / totalExpenses) * 100,
+        cumulative: 100,
+        color: "#9ca3af"
+      });
+    }
+
+    return data;
+  }, [transactions]);
 
   if (paretoData.length === 0) {
     return (
@@ -177,4 +182,4 @@ export default function ExpenseParetoChart({ transactions }) {
       </CardContent>
     </Card>
   );
-}
+});

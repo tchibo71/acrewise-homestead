@@ -47,6 +47,7 @@ export default function COGSCalculator({ transactions = [], production = [] }) {
   const queryClient = useQueryClient();
   const [showSettings, setShowSettings] = React.useState(false);
   const [laborRate, setLaborRate] = React.useState(15);
+  const [isCalculated, setIsCalculated] = React.useState(false);
 
   // Fetch farm profile for labor rate
   const { data: farmProfiles = [] } = useQuery({
@@ -79,8 +80,18 @@ export default function COGSCalculator({ transactions = [], production = [] }) {
     }
   });
 
-  // Calculate COGS for each production type
+  // Calculate COGS only when explicitly requested
   const cogsData = useMemo(() => {
+    // Skip expensive calculation until user requests it
+    if (!isCalculated) {
+      return {
+        cogsByProduct: [],
+        expensesByCategory: {},
+        totalCOGSExpenses: 0,
+        periodStart: subMonths(new Date(), 3),
+        periodEnd: new Date()
+      };
+    }
     // Get date range for calculations (last 3 months for relevance)
     const endDate = new Date();
     const startDate = subMonths(endDate, 3);
@@ -179,7 +190,7 @@ export default function COGSCalculator({ transactions = [], production = [] }) {
       periodStart: startDate,
       periodEnd: endDate
     };
-  }, [transactions, production, laborRate]);
+  }, [transactions, production, laborRate, isCalculated]);
 
   const getProfitabilityIndicator = (margin) => {
     if (margin >= 30) return { color: "bg-green-100 text-green-800 border-green-200", label: "Highly Profitable", icon: TrendingUp };
@@ -243,7 +254,22 @@ export default function COGSCalculator({ transactions = [], production = [] }) {
           </div>
         )}
 
-        {cogsData.cogsByProduct.length === 0 ? (
+        {!isCalculated ? (
+          <div className="text-center py-8">
+            <Calculator className="w-12 h-12 mx-auto mb-3 text-purple-400" />
+            <p className="text-gray-700 mb-2 font-medium">COGS Analysis Ready</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Click below to calculate detailed profitability metrics
+            </p>
+            <Button 
+              onClick={() => setIsCalculated(true)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              Calculate COGS Now
+            </Button>
+          </div>
+        ) : cogsData.cogsByProduct.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Calculator className="w-12 h-12 mx-auto mb-3 text-gray-400" />
             <p>No production data available</p>

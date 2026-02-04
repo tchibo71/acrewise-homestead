@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, DollarSign, Sprout, Target } from "lucide-rea
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 export default function ROIAnalytics() {
+  const [showCalculations, setShowCalculations] = React.useState(false);
   const { data: harvests = [] } = useQuery({
     queryKey: ['harvest-records'],
     queryFn: () => base44.entities.HarvestRecord.list('-harvest_date'),
@@ -35,8 +36,9 @@ export default function ROIAnalytics() {
     },
   });
 
-  // Calculate ROI for gardens/raised beds
-  const calculateGardenROI = () => {
+  // Lazy calculations - only run when user requests
+  const calculateGardenROI = React.useCallback(() => {
+    if (!showCalculations) return [];
     return gardens.map(garden => {
       const gardenHarvests = harvests.filter(h => h.garden_plot_id === garden.id);
       const totalValue = gardenHarvests.reduce((sum, h) => sum + (h.market_value || h.actual_sale_value || 0), 0);
@@ -63,10 +65,11 @@ export default function ROIAnalytics() {
         harvestCount: gardenHarvests.length
       };
     }).filter(g => g.harvestCount > 0);
-  };
+  }, [gardens, harvests, expenses, showCalculations]);
 
   // Calculate cost per dozen eggs
-  const calculateEggROI = () => {
+  const calculateEggROI = React.useCallback(() => {
+    if (!showCalculations) return null;
     const eggProduction = production.filter(p => p.production_type === 'eggs');
     if (eggProduction.length === 0) return null;
 
@@ -97,21 +100,48 @@ export default function ROIAnalytics() {
       roi: roi.toFixed(1),
       chickenCount: chickens.length
     };
-  };
+  }, [production, expenses, showCalculations]);
 
   const gardenROI = calculateGardenROI();
   const eggROI = calculateEggROI();
 
   const hasData = gardenROI.length > 0 || eggROI;
 
-  if (!hasData) {
+  const canCalculate = harvests.length > 0 || production.length > 0;
+
+  if (!showCalculations) {
     return (
       <Card className="border-purple-300 bg-purple-50">
         <CardContent className="py-8 text-center">
           <Target className="w-12 h-12 text-purple-600 mx-auto mb-3" />
           <h3 className="font-semibold text-purple-900 mb-2">ROI Analytics Ready</h3>
+          <p className="text-sm text-purple-700 mb-4">
+            {canCalculate 
+              ? "Click below to calculate detailed return on investment metrics"
+              : "Start logging harvests and production to see your ROI"}
+          </p>
+          {canCalculate && (
+            <Button 
+              onClick={() => setShowCalculations(true)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Calculate ROI
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasData) {
+    return (
+      <Card className="border-purple-300 bg-purple-50">
+        <CardContent className="py-8 text-center">
+          <Target className="w-12 h-12 text-purple-600 mx-auto mb-3" />
+          <h3 className="font-semibold text-purple-900 mb-2">No ROI Data Yet</h3>
           <p className="text-sm text-purple-700">
-            Start logging harvests and production to see your return on investment automatically calculated.
+            Log more harvests and production records to see detailed analytics.
           </p>
         </CardContent>
       </Card>
