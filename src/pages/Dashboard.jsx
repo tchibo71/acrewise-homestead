@@ -47,6 +47,9 @@ export default function Dashboard() {
   const [selectedSeason, setSelectedSeason] = useState(autoSeason);
   const [showPaywall, setShowPaywall] = useState(false);
 
+  // Memoize callbacks to prevent child re-renders
+  const handleUpgrade = React.useCallback(() => setShowPaywall(true), []);
+
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
     queryFn: checkSubscription,
@@ -234,7 +237,7 @@ export default function Dashboard() {
             <Suspense fallback={<CardSkeleton />}>
               <TeamCollaboration 
                 subscription={subscriptionData.subscription} 
-                onUpgrade={() => setShowPaywall(true)} 
+                onUpgrade={handleUpgrade} 
               />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>

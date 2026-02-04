@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, Stethoscope, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
-export default function RecentActivity() {
+export default React.memo(function RecentActivity() {
   // Fetch recent activity from multiple sources with aggressive caching and limits
   const { data: recentActivity = [], isLoading } = useQuery({
     queryKey: ['dashboard-recent-activity'],
@@ -75,8 +75,8 @@ export default function RecentActivity() {
 
   const getActivityColor = useCallback((type) => activityColors[type] || activityColors.default, [activityColors]);
 
-  // Memoize displayed activities (limit to 5)
-  const displayedActivities = useMemo(() => recentActivity.slice(0, 5), [recentActivity]);
+  // Slice in render is fine with memoized component
+  const displayedActivities = recentActivity.slice(0, 5);
 
   return (
     <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
@@ -121,4 +121,4 @@ export default function RecentActivity() {
       </CardContent>
     </Card>
   );
-}
+});

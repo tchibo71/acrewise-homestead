@@ -22,13 +22,16 @@ const seasonColors = {
   year_round: "from-gray-500 to-slate-500"
 };
 
-export default function SeasonalGuide({ season, guides }) {
+export default React.memo(function SeasonalGuide({ season, guides }) {
   const SeasonIcon = seasonIcons[season] || Calendar;
   const colorClass = seasonColors[season] || seasonColors.year_round;
   
-  const seasonGuides = guides.filter(g => 
-    g.season?.includes(season) || g.season?.includes('year_round')
-  ).slice(0, 3);
+  const seasonGuides = React.useMemo(() => 
+    guides.filter(g => 
+      g.season?.includes(season) || g.season?.includes('year_round')
+    ).slice(0, 3),
+    [season, guides]
+  );
 
   return (
     <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
@@ -78,4 +81,4 @@ export default function SeasonalGuide({ season, guides }) {
       </CardContent>
     </Card>
   );
-}
+});

@@ -9,6 +9,7 @@ import {
   Droplets
 } from "lucide-react";
 
+// Static data outside component to prevent recreation
 const actions = [
   {
     icon: Plus,
@@ -40,7 +41,7 @@ const actions = [
   }
 ];
 
-export default function QuickActions() {
+export default React.memo(function QuickActions() {
   return (
     <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm">
       <CardHeader>
@@ -63,4 +64,4 @@ export default function QuickActions() {
       </CardContent>
     </Card>
   );
-}
+});
