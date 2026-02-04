@@ -38,6 +38,7 @@ import BreedingManager from "../components/livestock/BreedingManager";
 import EstrousCycleTracker from "../components/livestock/EstrousCycleTracker";
 import AnimalTasksList from "../components/livestock/AnimalTasksList";
 import ExportButtons from "../components/utils/ExportButtons";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 
 const animalIcons = {
@@ -71,6 +72,7 @@ export default function LivestockDetail() {
   const [showVaccinationModal, setShowVaccinationModal] = useState(false);
   const [showProductionModal, setShowProductionModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { data: animal, isLoading: loadingAnimal } = useQuery({
     queryKey: ['livestock', livestockId],
@@ -120,9 +122,12 @@ export default function LivestockDetail() {
   });
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this animal? This action cannot be undone.')) {
-      deleteMutation.mutate();
-    }
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    deleteMutation.mutate();
+    setDeleteConfirmOpen(false);
   };
 
   const getAge = () => {
@@ -745,6 +750,15 @@ export default function LivestockDetail() {
             onClose={() => setShowEditModal(false)}
           />
         )}
+
+        <ConfirmDeleteDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          onConfirm={confirmDelete}
+          title="Delete Livestock"
+          itemName={animal?.name_or_tag}
+          description={`Are you sure you want to permanently delete ${animal?.name_or_tag}? This will also remove all associated records including weight history, vet visits, vaccinations, and production data.`}
+        />
       </div>
     </div>
   );
