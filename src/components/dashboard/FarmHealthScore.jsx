@@ -36,7 +36,9 @@ export default function FarmHealthScore() {
       if (!isAuthenticated) return [];
       return base44.entities.FarmGoal.list();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 min - render stale instantly
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const { data: checklists = [] } = useQuery({
@@ -46,9 +48,9 @@ export default function FarmHealthScore() {
       if (!isAuthenticated) return [];
       return base44.entities.ChecklistItem.list();
     },
-    staleTime: 1 * 60 * 1000, // 1 minute stale time for timely updates
-    gcTime: 30 * 60 * 1000,
-    refetchInterval: 60 * 60 * 1000, // 1 hour background refetch
+    staleTime: 10 * 60 * 1000, // 10 min - render stale instantly
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
@@ -59,8 +61,9 @@ export default function FarmHealthScore() {
       if (!isAuthenticated) return [];
       return base44.entities.Production.list('-production_date', 100);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache
+    staleTime: 10 * 60 * 1000, // 10 min - render stale instantly
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 

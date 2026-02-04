@@ -72,10 +72,10 @@ export default function Dashboard() {
       if (!isAuthenticated) return [];
       return base44.entities.ChecklistItem.list('-created_date', 50);
     },
-    staleTime: 1 * 60 * 1000, // 1 minute stale time for timely updates
-    gcTime: 30 * 60 * 1000,
-    refetchInterval: 60 * 60 * 1000, // 1 hour background refetch
+    staleTime: 5 * 60 * 1000, // 5 minutes - render stale instantly
+    gcTime: 60 * 60 * 1000, // 1 hour cache
     refetchOnWindowFocus: false,
+    refetchOnMount: false, // Use cached data, refetch in background
   });
 
   const { data: guides = [] } = useQuery({
@@ -132,7 +132,7 @@ export default function Dashboard() {
         {/* Draft Sync Manager - for offline entries */}
         {user && <DraftSyncManager userEmail={user.email} />}
 
-        {/* Stats Grid */}
+        {/* Stats Grid - Render immediately with skeleton or cached data */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-none shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
             <CardHeader className="pb-3">
@@ -142,14 +142,22 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-end gap-2">
-                  <span className="text-3xl font-bold text-green-700">{completedTasks}</span>
-                  <span className="text-gray-500 mb-1">/ {totalTasks}</span>
+              {checklists.length === 0 ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-20" />
+                  <Skeleton className="h-2 w-full" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <Progress value={completionRate} className="h-2" />
-                <p className="text-xs text-gray-500">{completionRate.toFixed(0)}% Complete</p>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold text-green-700">{completedTasks}</span>
+                    <span className="text-gray-500 mb-1">/ {totalTasks}</span>
+                  </div>
+                  <Progress value={completionRate} className="h-2" />
+                  <p className="text-xs text-gray-500">{completionRate.toFixed(0)}% Complete</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -161,11 +169,20 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-end gap-2">
-                <span className="text-3xl font-bold text-emerald-700">{guides.length}</span>
-                <span className="text-gray-500 mb-1">guides</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Across all categories</p>
+              {guides.length === 0 ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-end gap-2">
+                    <span className="text-3xl font-bold text-emerald-700">{guides.length}</span>
+                    <span className="text-gray-500 mb-1">guides</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">Across all categories</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -177,13 +194,22 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-end gap-2">
-                <span className={`text-3xl font-bold ${urgentTasks > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                  {urgentTasks}
-                </span>
-                <span className="text-gray-500 mb-1">pending</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">High priority items</p>
+              {checklists.length === 0 ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-12" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-end gap-2">
+                    <span className={`text-3xl font-bold ${urgentTasks > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                      {urgentTasks}
+                    </span>
+                    <span className="text-gray-500 mb-1">pending</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">High priority items</p>
+                </>
+              )}
             </CardContent>
           </Card>
 
