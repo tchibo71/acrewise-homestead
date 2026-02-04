@@ -18,6 +18,7 @@ import ChecklistForm from "../components/checklists/ChecklistForm";
 import ChecklistItem from "../components/checklists/ChecklistItem";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 export default function Checklists() {
   const queryClient = useQueryClient();
@@ -130,13 +131,24 @@ export default function Checklists() {
     });
   };
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+
   const handleDelete = (taskId) => {
     if (!subscriptionData.isPro) {
       setShowPaywall(true);
       return;
     }
-    if (confirm('Are you sure you want to delete this task?')) {
-      deleteTaskMutation.mutate(taskId);
+    const task = tasks.find(t => t.id === taskId);
+    setTaskToDelete(task);
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (taskToDelete) {
+      deleteTaskMutation.mutate(taskToDelete.id);
+      setDeleteConfirmOpen(false);
+      setTaskToDelete(null);
     }
   };
 
@@ -276,6 +288,15 @@ export default function Checklists() {
             onClose={() => setShowPaywall(false)}
             feature="Checklist management"
           />
+
+          <ConfirmDeleteDialog
+            open={deleteConfirmOpen}
+            onOpenChange={setDeleteConfirmOpen}
+            onConfirm={confirmDelete}
+            title="Delete Task"
+            itemName={taskToDelete?.title}
+            description={`Are you sure you want to permanently delete the task "${taskToDelete?.title}"?`}
+          />
         </div>
       </div>
     );
@@ -392,6 +413,15 @@ export default function Checklists() {
             ))}
           </div>
         )}
+
+        <ConfirmDeleteDialog
+          open={deleteConfirmOpen}
+          onOpenChange={setDeleteConfirmOpen}
+          onConfirm={confirmDelete}
+          title="Delete Task"
+          itemName={taskToDelete?.title}
+          description={`Are you sure you want to permanently delete the task "${taskToDelete?.title}"?`}
+        />
       </div>
     </div>
   );
