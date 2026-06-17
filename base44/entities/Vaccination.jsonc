@@ -1,0 +1,76 @@
+{
+  "name": "Vaccination",
+  "type": "object",
+  "properties": {
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of the livestock"
+    },
+    "vaccine_name": {
+      "type": "string",
+      "description": "Name of vaccine"
+    },
+    "vaccination_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When next dose is due"
+    },
+    "administered_by": {
+      "type": "string",
+      "description": "Who administered the vaccine"
+    },
+    "batch_number": {
+      "type": "string",
+      "description": "Vaccine batch/lot number"
+    },
+    "dosage": {
+      "type": "string",
+      "description": "Dosage amount"
+    },
+    "location": {
+      "type": "string",
+      "description": "Injection site"
+    },
+    "cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "livestock_id",
+    "vaccine_name",
+    "vaccination_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "name": "Budget",
+  "type": "object",
+  "properties": {
+    "budget_name": {
+      "type": "string"
+    },
+    "budget_type": {
+      "type": "string",
+      "enum": [
+        "whole_farm",
+        "enterprise_crop",
+        "enterprise_livestock",
+        "partial",
+        "project"
+      ],
+      "description": "Type of budget"
+    },
+    "year": {
+      "type": "number"
+    },
+    "enterprise_name": {
+      "type": "string",
+      "description": "Specific crop or animal type"
+    },
+    "projected_revenue": {
+      "type": "number"
+    },
+    "actual_revenue": {
+      "type": "number"
+    },
+    "projected_expenses": {
+      "type": "number"
+    },
+    "actual_expenses": {
+      "type": "number"
+    },
+    "line_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "projected": {
+            "type": "number"
+          },
+          "actual": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ai_forecast": {
+      "type": "string",
+      "description": "AI-generated financial forecast"
+    }
+  },
+  "required": [
+    "budget_name",
+    "budget_type",
+    "year"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

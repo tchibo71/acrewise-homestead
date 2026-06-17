@@ -1,0 +1,136 @@
+{
+  "name": "ScenarioResponseDB",
+  "type": "object",
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "description": "Unique identifier for the template"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "livestock_health",
+        "livestock_breeding",
+        "livestock_nutrition",
+        "predator_control",
+        "pest_management",
+        "crop_disease",
+        "crop_planning",
+        "soil_health",
+        "water_management",
+        "infrastructure",
+        "equipment",
+        "financial",
+        "weather_emergency",
+        "processing_butchering",
+        "fermentation",
+        "dairy",
+        "poultry",
+        "general"
+      ],
+      "description": "Category of the advice template"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for matching user scenarios"
+    },
+    "animal_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Applicable animal types (chicken, goat, cow, etc.)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Template title"
+    },
+    "scenario_description": {
+      "type": "string",
+      "description": "Description of when this template applies"
+    },
+    "advice_content": {
+      "type": "string",
+      "description": "Full detailed advice text in markdown"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Step-by-step action items"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Important warnings or cautions"
+    },
+    "when_to_call_vet": {
+      "type": "string",
+      "description": "Conditions that require professional help"
+    },
+    "estimated_cost_range": {
+      "type": "string",
+      "description": "Estimated cost range for implementing advice"
+    },
+    "time_to_resolution": {
+      "type": "string",
+      "description": "Expected time to see results"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "seasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "spring",
+          "summer",
+          "fall",
+          "winter",
+          "year_round"
+        ]
+      },
+      "description": "Applicable seasons"
+    }
+  },
+  "required": [
+    "template_id",
+    "category",
+    "keywords",
+    "title",
+    "advice_content"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "name": "Subscription",
+  "type": "object",
+  "properties": {
+    "plan": {
+      "type": "string",
+      "enum": [
+        "free",
+        "monthly",
+        "yearly",
+        "team_monthly",
+        "team_yearly"
+      ],
+      "default": "free",
+      "description": "Subscription plan type"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled",
+        "expired",
+        "trial"
+      ],
+      "default": "trial",
+      "description": "Subscription status"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Subscription start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Subscription end date"
+    },
+    "referral_credits": {
+      "type": "number",
+      "default": 0,
+      "description": "Dollar amount of referral credits earned"
+    },
+    "referral_discount_percent": {
+      "type": "number",
+      "default": 0,
+      "description": "Current referral discount percentage"
+    },
+    "total_validated_referrals": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of validated referrals"
+    },
+    "stripe_customer_id": {
+      "type": "string",
+      "description": "Stripe customer ID"
+    },
+    "stripe_subscription_id": {
+      "type": "string",
+      "description": "Stripe subscription ID"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner (for team members)"
+    },
+    "team_member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Emails of team members (up to 2 additional seats)"
+    },
+    "is_team_member": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this subscription is for a team member"
+    }
+  },
+  "required": [
+    "plan",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "team_member_emails": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

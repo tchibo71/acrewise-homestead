@@ -1,0 +1,112 @@
+{
+  "name": "Guide",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the guide"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "composting",
+        "gardening",
+        "raised_beds",
+        "biointensive",
+        "harvesting",
+        "livestock",
+        "water_management",
+        "greenhouse",
+        "property_engineering",
+        "seasonal_planning"
+      ],
+      "description": "Category of the guide"
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ],
+      "description": "Difficulty level"
+    },
+    "season": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "spring",
+          "summer",
+          "fall",
+          "winter",
+          "year_round"
+        ]
+      },
+      "description": "Relevant seasons"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description"
+    },
+    "content": {
+      "type": "string",
+      "description": "Full guide content in markdown"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "tips": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Step-by-step instructions"
+    },
+    "tips": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Quick tips and best practices"
+    },
+    "tools_needed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tools and materials needed"
+    },
+    "time_estimate": {
+      "type": "string",
+      "description": "Estimated time to complete"
+    }
+  },
+  "required": [
+    "title",
+    "category",
+    "description"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

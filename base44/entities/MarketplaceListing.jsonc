@@ -1,0 +1,130 @@
+{
+  "name": "MarketplaceListing",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string",
+      "description": "Name of the product"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "eggs",
+        "dairy",
+        "meat",
+        "produce",
+        "honey",
+        "plants",
+        "preserves",
+        "baked_goods",
+        "fiber",
+        "livestock",
+        "other"
+      ],
+      "description": "Product category"
+    },
+    "description": {
+      "type": "string",
+      "description": "Product description"
+    },
+    "quantity_available": {
+      "type": "number",
+      "description": "Current quantity available"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement (dozen, lbs, gallon, etc.)"
+    },
+    "price": {
+      "type": "number",
+      "description": "Price per unit"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this listing is visible on public farm stand"
+    },
+    "pickup_location": {
+      "type": "string",
+      "description": "Where customers can pickup"
+    },
+    "available_days": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Days of week available for pickup"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Product photo URLs"
+    },
+    "inventory_item_id": {
+      "type": "string",
+      "description": "Linked inventory item ID for auto-sync"
+    },
+    "auto_sync_quantity": {
+      "type": "boolean",
+      "default": false,
+      "description": "Auto-update quantity from inventory"
+    },
+    "last_restocked": {
+      "type": "string",
+      "format": "date"
+    },
+    "contact_method": {
+      "type": "string",
+      "enum": [
+        "email",
+        "phone",
+        "text",
+        "form"
+      ],
+      "default": "email",
+      "description": "How customers should contact (for future order system)"
+    },
+    "contact_value": {
+      "type": "string",
+      "description": "Email/phone for contact (for future order system)"
+    },
+    "allow_inquiries": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow customer inquiries (framework for future)"
+    },
+    "allow_orders": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable order placement (framework for future paid feature)"
+    },
+    "minimum_order": {
+      "type": "number",
+      "description": "Minimum order quantity (framework for future)"
+    }
+  },
+  "required": [
+    "product_name",
+    "category",
+    "quantity_available",
+    "unit",
+    "price"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

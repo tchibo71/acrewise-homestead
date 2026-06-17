@@ -1,0 +1,87 @@
+{
+  "name": "ScenarioAnalysis",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the scenario"
+    },
+    "scenario_description": {
+      "type": "string",
+      "description": "User's detailed scenario description"
+    },
+    "uploaded_files": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "URLs of uploaded photos/documents"
+    },
+    "ai_analysis": {
+      "type": "string",
+      "description": "AI-generated analysis and recommendations"
+    },
+    "contains_criminal_warning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this scenario triggered criminal content warning"
+    },
+    "user_overrode_warning": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user overrode the criminal warning"
+    },
+    "disclaimer_acceptance_id": {
+      "type": "string",
+      "description": "ID of associated disclaimer acceptance if warning overridden"
+    },
+    "expires_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this analysis will be automatically deleted (10 days from creation)"
+    },
+    "printed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether user has printed this analysis"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Category tags for the scenario"
+    }
+  },
+  "required": [
+    "title",
+    "scenario_description",
+    "ai_analysis"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

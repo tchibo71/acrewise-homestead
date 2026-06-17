@@ -1,0 +1,98 @@
+{
+  "name": "SoilTest",
+  "type": "object",
+  "properties": {
+    "test_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "location": {
+      "type": "string"
+    },
+    "ph_level": {
+      "type": "number"
+    },
+    "nitrogen_level": {
+      "type": "string"
+    },
+    "phosphorus_level": {
+      "type": "string"
+    },
+    "potassium_level": {
+      "type": "string"
+    },
+    "organic_matter_percent": {
+      "type": "number"
+    },
+    "calcium_level": {
+      "type": "string"
+    },
+    "magnesium_level": {
+      "type": "string"
+    },
+    "sulfur_level": {
+      "type": "string"
+    },
+    "recommendations": {
+      "type": "string",
+      "description": "Lab recommendations"
+    },
+    "amendments_applied": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "amendment": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          },
+          "application_date": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "cost": {
+      "type": "number"
+    },
+    "lab_name": {
+      "type": "string"
+    },
+    "ai_analysis": {
+      "type": "string",
+      "description": "AI-generated nutrient management strategy"
+    }
+  },
+  "required": [
+    "test_date",
+    "location"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

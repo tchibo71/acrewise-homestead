@@ -1,0 +1,131 @@
+{
+  "name": "EmergencyLog",
+  "type": "object",
+  "properties": {
+    "emergency_type": {
+      "type": "string",
+      "enum": [
+        "predator_attack",
+        "fire",
+        "sudden_illness",
+        "injury",
+        "equipment_failure",
+        "weather_damage",
+        "death",
+        "escape",
+        "poisoning",
+        "other"
+      ],
+      "description": "Type of emergency"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "high",
+      "description": "Emergency severity"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Exact timestamp of emergency"
+    },
+    "livestock_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of affected livestock"
+    },
+    "location_on_property": {
+      "type": "string",
+      "description": "Where on property this occurred"
+    },
+    "quick_description": {
+      "type": "string",
+      "description": "Brief description captured during emergency"
+    },
+    "detailed_notes": {
+      "type": "string",
+      "description": "Detailed notes added later"
+    },
+    "actions_taken": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Immediate actions taken"
+    },
+    "financial_impact": {
+      "type": "number",
+      "description": "Estimated or actual financial loss/cost"
+    },
+    "insurance_claim_filed": {
+      "type": "boolean",
+      "default": false
+    },
+    "insurance_claim_number": {
+      "type": "string"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photo URLs for documentation"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolution_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "emergency_type",
+    "timestamp",
+    "quick_description"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

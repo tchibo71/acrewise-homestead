@@ -1,0 +1,124 @@
+{
+  "name": "Breeding",
+  "type": "object",
+  "properties": {
+    "dam_id": {
+      "type": "string",
+      "description": "ID of mother animal in system"
+    },
+    "dam_external_name": {
+      "type": "string",
+      "description": "Name of mother animal if not in system"
+    },
+    "sire_id": {
+      "type": "string",
+      "description": "ID of father animal in system"
+    },
+    "sire_external_name": {
+      "type": "string",
+      "description": "Name of father animal if not in system"
+    },
+    "breeding_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of breeding"
+    },
+    "breeding_type": {
+      "type": "string",
+      "enum": [
+        "natural",
+        "artificial_insemination"
+      ],
+      "default": "natural"
+    },
+    "expected_due_date_earliest": {
+      "type": "string",
+      "format": "date",
+      "description": "Earliest possible due date"
+    },
+    "expected_due_date_latest": {
+      "type": "string",
+      "format": "date",
+      "description": "Latest possible due date"
+    },
+    "expected_due_date_average": {
+      "type": "string",
+      "format": "date",
+      "description": "Average expected due date"
+    },
+    "gestation_period_days": {
+      "type": "number",
+      "description": "Expected gestation period for this species"
+    },
+    "actual_birth_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Actual birth/kidding date"
+    },
+    "number_born": {
+      "type": "number",
+      "description": "Number of offspring born"
+    },
+    "offspring_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of offspring from this breeding"
+    },
+    "pregnancy_confirmed": {
+      "type": "boolean",
+      "default": false
+    },
+    "confirmation_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "confirmation_method": {
+      "type": "string",
+      "enum": [
+        "ultrasound",
+        "blood_test",
+        "palpation",
+        "observation"
+      ],
+      "description": "How pregnancy was confirmed"
+    },
+    "complications": {
+      "type": "string",
+      "description": "Any complications during pregnancy or birth"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "breeding_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

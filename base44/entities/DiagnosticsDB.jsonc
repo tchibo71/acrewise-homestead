@@ -1,0 +1,131 @@
+{
+  "name": "DiagnosticsDB",
+  "type": "object",
+  "properties": {
+    "diagnostic_id": {
+      "type": "string",
+      "description": "Unique identifier for the diagnostic template"
+    },
+    "condition_name": {
+      "type": "string",
+      "description": "Name of the condition or issue"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "skin_condition",
+        "eye_condition",
+        "hoof_foot",
+        "respiratory",
+        "digestive",
+        "parasites",
+        "injury",
+        "behavioral",
+        "reproductive",
+        "nutritional",
+        "general_illness"
+      ],
+      "description": "Category of the diagnostic"
+    },
+    "animal_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Applicable animal types"
+    },
+    "visual_indicators": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords for visual matching from images"
+    },
+    "symptoms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Common symptoms associated with this condition"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "mild",
+        "moderate",
+        "severe",
+        "critical"
+      ],
+      "default": "moderate"
+    },
+    "diagnosis_description": {
+      "type": "string",
+      "description": "Detailed description of the condition"
+    },
+    "treatment_plan": {
+      "type": "string",
+      "description": "Full treatment plan in markdown format"
+    },
+    "treatment_steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_number": {
+            "type": "number"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Common medications or treatments"
+    },
+    "prevention_tips": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "when_to_call_vet": {
+      "type": "string",
+      "description": "Conditions requiring professional veterinary care"
+    },
+    "recovery_time": {
+      "type": "string",
+      "description": "Expected recovery timeline"
+    },
+    "contagious": {
+      "type": "boolean",
+      "default": false
+    },
+    "quarantine_required": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "diagnostic_id",
+    "condition_name",
+    "category",
+    "diagnosis_description",
+    "treatment_plan"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

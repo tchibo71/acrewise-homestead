@@ -1,0 +1,110 @@
+{
+  "name": "HarvestRecord",
+  "type": "object",
+  "properties": {
+    "harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of harvest"
+    },
+    "crop_type": {
+      "type": "string",
+      "description": "Type of crop harvested"
+    },
+    "garden_plot_id": {
+      "type": "string",
+      "description": "ID of garden plot harvested from"
+    },
+    "orchard_id": {
+      "type": "string",
+      "description": "ID of orchard harvested from"
+    },
+    "quantity_harvested": {
+      "type": "number",
+      "description": "Amount harvested"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement (lbs, bushels, dozen, etc.)"
+    },
+    "quality_grade": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ],
+      "default": "good"
+    },
+    "market_value": {
+      "type": "number",
+      "description": "Estimated market value of harvest"
+    },
+    "actual_sale_value": {
+      "type": "number",
+      "description": "Actual amount sold for (if sold)"
+    },
+    "roi_percentage": {
+      "type": "number",
+      "description": "Calculated ROI percentage"
+    },
+    "yield_per_sqft": {
+      "type": "number",
+      "description": "Calculated yield per square foot"
+    },
+    "cost_per_unit": {
+      "type": "number",
+      "description": "Calculated cost per unit produced"
+    },
+    "total_input_costs": {
+      "type": "number",
+      "description": "Sum of all costs for this harvest cycle"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "harvest_date",
+    "crop_type",
+    "quantity_harvested",
+    "unit"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

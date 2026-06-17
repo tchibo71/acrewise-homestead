@@ -1,0 +1,173 @@
+{
+  "name": "InventoryItem",
+  "type": "object",
+  "properties": {
+    "item_name": {
+      "type": "string",
+      "description": "Name of the inventory item"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "feed",
+        "seed",
+        "fertilizer",
+        "medication",
+        "vaccine",
+        "supplement",
+        "bedding",
+        "fencing",
+        "tools",
+        "hardware",
+        "pesticide",
+        "herbicide",
+        "cleaning",
+        "packaging",
+        "processing",
+        "other"
+      ],
+      "description": "Category of inventory"
+    },
+    "subcategory": {
+      "type": "string",
+      "description": "Subcategory for more specific classification"
+    },
+    "brand": {
+      "type": "string",
+      "description": "Brand or manufacturer"
+    },
+    "unit_type": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "kg",
+        "oz",
+        "g",
+        "gallons",
+        "liters",
+        "bags",
+        "boxes",
+        "bales",
+        "bottles",
+        "each",
+        "other"
+      ],
+      "description": "Unit of measurement"
+    },
+    "current_quantity": {
+      "type": "number",
+      "description": "Current quantity in stock"
+    },
+    "minimum_quantity": {
+      "type": "number",
+      "description": "Minimum stock level before reorder"
+    },
+    "reorder_quantity": {
+      "type": "number",
+      "description": "Quantity to reorder when below minimum"
+    },
+    "unit_cost": {
+      "type": "number",
+      "description": "Cost per unit"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Total value of current stock"
+    },
+    "storage_location": {
+      "type": "string",
+      "description": "Where item is stored"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expiration date for perishable items"
+    },
+    "lot_number": {
+      "type": "string",
+      "description": "Batch or lot number"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Primary supplier"
+    },
+    "supplier_contact": {
+      "type": "string",
+      "description": "Supplier contact information"
+    },
+    "last_purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_purchase_quantity": {
+      "type": "number"
+    },
+    "last_purchase_cost": {
+      "type": "number"
+    },
+    "usage_rate": {
+      "type": "number",
+      "description": "Average usage per week/month"
+    },
+    "usage_period": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "monthly"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "enable_low_stock_alert": {
+      "type": "boolean",
+      "default": true
+    },
+    "enable_expiration_alert": {
+      "type": "boolean",
+      "default": true
+    },
+    "barcode": {
+      "type": "string",
+      "description": "Product barcode/SKU"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Photo of the item"
+    }
+  },
+  "required": [
+    "item_name",
+    "category",
+    "unit_type",
+    "current_quantity"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

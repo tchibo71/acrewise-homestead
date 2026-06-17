@@ -1,0 +1,125 @@
+{
+  "name": "MaintenanceTask",
+  "type": "object",
+  "properties": {
+    "task_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "buildings",
+        "equipment",
+        "fencing",
+        "irrigation",
+        "vehicles",
+        "infrastructure",
+        "other"
+      ]
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "ongoing",
+        "perpetual",
+        "seasonal",
+        "monthly",
+        "weekly",
+        "bi_weekly",
+        "bi_monthly",
+        "quarterly",
+        "bi_annually",
+        "annually",
+        "as_needed"
+      ],
+      "description": "Maintenance frequency"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "spring",
+        "summer",
+        "fall",
+        "winter",
+        "year_round"
+      ]
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "routine",
+        "important",
+        "urgent",
+        "critical"
+      ],
+      "default": "routine"
+    },
+    "description": {
+      "type": "string"
+    },
+    "estimated_cost": {
+      "type": "number"
+    },
+    "estimated_hours": {
+      "type": "number"
+    },
+    "last_completed": {
+      "type": "string",
+      "format": "date"
+    },
+    "next_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_progress",
+        "completed",
+        "overdue"
+      ],
+      "default": "pending"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "related_infrastructure_id": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "task_name",
+    "category",
+    "frequency"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

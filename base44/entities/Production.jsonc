@@ -1,0 +1,89 @@
+{
+  "name": "Production",
+  "type": "object",
+  "properties": {
+    "production_type": {
+      "type": "string",
+      "enum": [
+        "eggs",
+        "milk",
+        "honey",
+        "fiber",
+        "meat",
+        "other"
+      ],
+      "description": "Type of production"
+    },
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of producing livestock (optional for collective production)"
+    },
+    "production_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Amount produced"
+    },
+    "unit": {
+      "type": "string",
+      "description": "Unit of measurement (dozen, gallons, lbs, etc.)"
+    },
+    "quality_grade": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ],
+      "description": "Quality assessment"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "production_type",
+    "production_date",
+    "quantity",
+    "unit"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

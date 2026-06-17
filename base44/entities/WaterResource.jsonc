@@ -1,0 +1,130 @@
+{
+  "name": "WaterResource",
+  "type": "object",
+  "properties": {
+    "resource_name": {
+      "type": "string"
+    },
+    "resource_type": {
+      "type": "string",
+      "enum": [
+        "well",
+        "pond",
+        "stream",
+        "spring",
+        "rainwater_collection",
+        "municipal",
+        "irrigation_ditch"
+      ],
+      "description": "Type of water source"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "capacity_gallons": {
+      "type": "number"
+    },
+    "flow_rate_gpm": {
+      "type": "number",
+      "description": "Gallons per minute"
+    },
+    "water_quality": {
+      "type": "string",
+      "enum": [
+        "potable",
+        "agricultural",
+        "livestock",
+        "unknown"
+      ],
+      "description": "Water quality rating"
+    },
+    "last_test_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "test_results": {
+      "type": "string"
+    },
+    "reliability": {
+      "type": "string",
+      "enum": [
+        "year_round",
+        "seasonal",
+        "intermittent",
+        "emergency_only"
+      ],
+      "description": "How reliable is this source"
+    },
+    "infrastructure": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "component_type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "install_date": {
+            "type": "string"
+          },
+          "maintenance_schedule": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Pumps, tanks, pipes, etc."
+    },
+    "serves_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Which areas does this water source serve"
+    },
+    "backup_source": {
+      "type": "string"
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated water management and conservation strategies"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "resource_name",
+    "resource_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

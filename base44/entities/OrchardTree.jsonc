@@ -1,0 +1,124 @@
+{
+  "name": "OrchardTree",
+  "type": "object",
+  "properties": {
+    "orchard_id": {
+      "type": "string",
+      "description": "ID of parent orchard"
+    },
+    "tree_number": {
+      "type": "string",
+      "description": "Unique identifier (e.g., A-12, Row 3 Tree 5)"
+    },
+    "variety": {
+      "type": "string"
+    },
+    "rootstock": {
+      "type": "string"
+    },
+    "planting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "health_status": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor",
+        "diseased",
+        "dead"
+      ],
+      "default": "good"
+    },
+    "trunk_diameter": {
+      "type": "number",
+      "description": "Diameter in inches"
+    },
+    "height": {
+      "type": "number",
+      "description": "Tree height in feet"
+    },
+    "first_production_year": {
+      "type": "number"
+    },
+    "last_pruning_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "last_fertilization_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "pest_issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "disease_issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "harvest_records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number"
+          },
+          "yield_pounds": {
+            "type": "number"
+          },
+          "quality": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "orchard_id",
+    "tree_number",
+    "variety"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

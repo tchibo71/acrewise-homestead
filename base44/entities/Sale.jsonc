@@ -1,0 +1,101 @@
+{
+  "name": "Sale",
+  "type": "object",
+  "properties": {
+    "sale_type": {
+      "type": "string",
+      "enum": [
+        "livestock",
+        "production",
+        "product",
+        "other"
+      ],
+      "description": "Type of sale"
+    },
+    "item_description": {
+      "type": "string",
+      "description": "What was sold"
+    },
+    "livestock_id": {
+      "type": "string",
+      "description": "If livestock sale, the animal ID"
+    },
+    "sale_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Number of items sold"
+    },
+    "weight": {
+      "type": "number",
+      "description": "Weight at sale (for livestock)"
+    },
+    "weight_unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "kg"
+      ]
+    },
+    "sale_price": {
+      "type": "number",
+      "description": "Total sale amount"
+    },
+    "buyer_name": {
+      "type": "string",
+      "description": "Name of buyer"
+    },
+    "buyer_contact": {
+      "type": "string",
+      "description": "Buyer contact information"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "check",
+        "credit_card",
+        "bank_transfer",
+        "barter",
+        "other"
+      ]
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "sale_type",
+    "item_description",
+    "sale_date",
+    "sale_price"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

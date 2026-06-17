@@ -1,0 +1,98 @@
+{
+  "name": "InventoryTransaction",
+  "type": "object",
+  "properties": {
+    "inventory_item_id": {
+      "type": "string",
+      "description": "ID of the inventory item"
+    },
+    "transaction_type": {
+      "type": "string",
+      "enum": [
+        "purchase",
+        "usage",
+        "waste",
+        "sale",
+        "adjustment",
+        "transfer"
+      ],
+      "description": "Type of transaction"
+    },
+    "transaction_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantity added or removed (positive for additions, negative for removals)"
+    },
+    "unit_cost": {
+      "type": "number",
+      "description": "Cost per unit for purchases"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Total transaction cost"
+    },
+    "supplier": {
+      "type": "string",
+      "description": "Supplier for purchases"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Reason for transaction"
+    },
+    "related_entity_type": {
+      "type": "string",
+      "enum": [
+        "livestock",
+        "crop",
+        "equipment",
+        "none"
+      ],
+      "description": "What this transaction relates to"
+    },
+    "related_entity_id": {
+      "type": "string",
+      "description": "ID of related entity"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "receipt_number": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "inventory_item_id",
+    "transaction_type",
+    "transaction_date",
+    "quantity"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

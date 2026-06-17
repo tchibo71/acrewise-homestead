@@ -1,0 +1,97 @@
+{
+  "name": "CustomerInquiry",
+  "type": "object",
+  "properties": {
+    "customer_name": {
+      "type": "string",
+      "description": "Name of customer"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone number"
+    },
+    "listing_id": {
+      "type": "string",
+      "description": "ID of marketplace listing inquired about"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Product they're interested in"
+    },
+    "inquiry_type": {
+      "type": "string",
+      "enum": [
+        "availability",
+        "custom_order",
+        "bulk_order",
+        "general_question"
+      ],
+      "default": "availability"
+    },
+    "message": {
+      "type": "string",
+      "description": "Customer's message"
+    },
+    "quantity_requested": {
+      "type": "number",
+      "description": "Quantity requested (for future order system)"
+    },
+    "preferred_pickup_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When they want to pickup (for future order system)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "responded",
+        "fulfilled",
+        "cancelled"
+      ],
+      "default": "pending"
+    },
+    "farm_owner_email": {
+      "type": "string",
+      "description": "Email of farm owner this inquiry is for"
+    },
+    "response_notes": {
+      "type": "string",
+      "description": "Farm owner's response notes"
+    },
+    "is_order": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is an order (for future paid feature)"
+    },
+    "order_total": {
+      "type": "number",
+      "description": "Total order amount (for future paid feature)"
+    }
+  },
+  "required": [
+    "customer_name",
+    "customer_email",
+    "message",
+    "farm_owner_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "farm_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {}
+  }
+}

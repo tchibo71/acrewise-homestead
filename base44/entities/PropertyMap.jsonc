@@ -1,0 +1,85 @@
+{
+  "name": "PropertyMap",
+  "type": "object",
+  "properties": {
+    "property_name": {
+      "type": "string",
+      "description": "Name of the property"
+    },
+    "center_latitude": {
+      "type": "number",
+      "description": "Center latitude coordinate"
+    },
+    "center_longitude": {
+      "type": "number",
+      "description": "Center longitude coordinate"
+    },
+    "zoom_level": {
+      "type": "number",
+      "default": 17,
+      "description": "Default zoom level"
+    },
+    "map_type": {
+      "type": "string",
+      "enum": [
+        "roadmap",
+        "satellite",
+        "hybrid",
+        "terrain"
+      ],
+      "default": "satellite",
+      "description": "Google Maps type"
+    },
+    "boundary_coordinates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Property boundary polygon coordinates"
+    },
+    "total_acreage": {
+      "type": "number",
+      "description": "Total property acreage"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "property_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

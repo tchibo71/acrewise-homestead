@@ -1,0 +1,101 @@
+{
+  "name": "CropPlan",
+  "type": "object",
+  "properties": {
+    "crop_name": {
+      "type": "string"
+    },
+    "variety": {
+      "type": "string"
+    },
+    "year": {
+      "type": "number"
+    },
+    "planting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "harvest_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "location": {
+      "type": "string",
+      "description": "Field or plot location"
+    },
+    "acreage": {
+      "type": "number"
+    },
+    "previous_crop": {
+      "type": "string",
+      "description": "For rotation tracking"
+    },
+    "planned_next_crop": {
+      "type": "string"
+    },
+    "seed_source": {
+      "type": "string"
+    },
+    "seed_cost": {
+      "type": "number"
+    },
+    "expected_yield": {
+      "type": "number"
+    },
+    "actual_yield": {
+      "type": "number"
+    },
+    "yield_unit": {
+      "type": "string"
+    },
+    "fertilizer_plan": {
+      "type": "string"
+    },
+    "pest_management_plan": {
+      "type": "string"
+    },
+    "irrigation_needs": {
+      "type": "string"
+    },
+    "labor_hours_estimate": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated planting and rotation recommendations"
+    }
+  },
+  "required": [
+    "crop_name",
+    "year"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

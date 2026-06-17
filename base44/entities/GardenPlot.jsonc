@@ -1,0 +1,143 @@
+{
+  "name": "GardenPlot",
+  "type": "object",
+  "properties": {
+    "plot_name": {
+      "type": "string"
+    },
+    "plot_type": {
+      "type": "string",
+      "enum": [
+        "raised_bed",
+        "in_ground",
+        "container",
+        "greenhouse",
+        "hoop_house",
+        "vertical"
+      ],
+      "description": "Type of garden plot"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "dimensions": {
+      "type": "string",
+      "description": "e.g., 4x8 feet, 100 sq ft"
+    },
+    "area_sq_ft": {
+      "type": "number"
+    },
+    "soil_type": {
+      "type": "string"
+    },
+    "sun_exposure": {
+      "type": "string",
+      "enum": [
+        "full_sun",
+        "partial_shade",
+        "full_shade"
+      ],
+      "description": "Daily sun exposure"
+    },
+    "irrigation_method": {
+      "type": "string"
+    },
+    "current_crops": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rotation_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "number"
+          },
+          "season": {
+            "type": "string"
+          },
+          "crops": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "soil_amendments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "amendment_type": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "last_soil_test_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "fallow",
+        "cover_crop",
+        "planning"
+      ],
+      "default": "active"
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated crop rotation and companion planting suggestions"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "plot_name",
+    "plot_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

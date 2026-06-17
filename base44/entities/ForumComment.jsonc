@@ -1,0 +1,50 @@
+{
+  "name": "ForumComment",
+  "type": "object",
+  "properties": {
+    "post_id": {
+      "type": "string",
+      "description": "ID of the forum post"
+    },
+    "content": {
+      "type": "string",
+      "description": "Comment content"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Comment author's name"
+    },
+    "upvotes": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of upvotes"
+    },
+    "is_solution": {
+      "type": "boolean",
+      "default": false,
+      "description": "Marked as solution to question"
+    },
+    "parent_comment_id": {
+      "type": "string",
+      "description": "For nested replies"
+    }
+  },
+  "required": [
+    "post_id",
+    "content"
+  ],
+  "rls": {
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

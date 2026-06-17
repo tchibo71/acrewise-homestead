@@ -1,0 +1,156 @@
+{
+  "name": "Orchard",
+  "type": "object",
+  "properties": {
+    "orchard_name": {
+      "type": "string",
+      "description": "Name of the orchard"
+    },
+    "fruit_type": {
+      "type": "string",
+      "enum": [
+        "apple",
+        "pear",
+        "peach",
+        "cherry",
+        "plum",
+        "apricot",
+        "citrus",
+        "fig",
+        "persimmon",
+        "nut_tree",
+        "mixed",
+        "other"
+      ],
+      "description": "Primary fruit type"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Center latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Center longitude"
+    },
+    "area_acres": {
+      "type": "number",
+      "description": "Orchard area in acres"
+    },
+    "total_trees": {
+      "type": "number",
+      "description": "Total number of trees"
+    },
+    "planting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "tree_spacing": {
+      "type": "string",
+      "description": "e.g., 15x20 feet"
+    },
+    "irrigation_system": {
+      "type": "string",
+      "enum": [
+        "drip",
+        "sprinkler",
+        "flood",
+        "none"
+      ],
+      "description": "Type of irrigation"
+    },
+    "soil_type": {
+      "type": "string"
+    },
+    "slope_percentage": {
+      "type": "number"
+    },
+    "pollination_strategy": {
+      "type": "string",
+      "description": "Cross-pollination varieties, etc."
+    },
+    "pest_management_plan": {
+      "type": "string"
+    },
+    "fertilization_schedule": {
+      "type": "string"
+    },
+    "pruning_schedule": {
+      "type": "string"
+    },
+    "expected_first_harvest_year": {
+      "type": "number"
+    },
+    "maturity_year": {
+      "type": "number",
+      "description": "Year when trees reach full production"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "planning",
+        "establishing",
+        "producing",
+        "mature",
+        "declining"
+      ],
+      "default": "planning"
+    },
+    "tree_varieties": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "variety_name": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "rootstock": {
+            "type": "string"
+          },
+          "pollination_group": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated setup and management recommendations"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "orchard_name",
+    "fruit_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

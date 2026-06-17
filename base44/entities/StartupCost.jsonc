@@ -1,0 +1,93 @@
+{
+  "name": "StartupCost",
+  "type": "object",
+  "properties": {
+    "item_name": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "land",
+        "buildings",
+        "equipment",
+        "livestock",
+        "vehicles",
+        "fencing",
+        "irrigation",
+        "legal_fees",
+        "permits",
+        "other"
+      ]
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "cost": {
+      "type": "number"
+    },
+    "useful_life_years": {
+      "type": "number",
+      "description": "Expected lifespan"
+    },
+    "depreciation_method": {
+      "type": "string",
+      "enum": [
+        "straight_line",
+        "declining_balance",
+        "none"
+      ]
+    },
+    "current_value": {
+      "type": "number"
+    },
+    "replacement_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "replacement_cost_estimate": {
+      "type": "number"
+    },
+    "vendor": {
+      "type": "string"
+    },
+    "warranty_info": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "item_name",
+    "category",
+    "cost"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

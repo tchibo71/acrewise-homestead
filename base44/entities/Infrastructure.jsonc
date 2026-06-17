@@ -1,0 +1,127 @@
+{
+  "name": "Infrastructure",
+  "type": "object",
+  "properties": {
+    "structure_name": {
+      "type": "string"
+    },
+    "structure_type": {
+      "type": "string",
+      "enum": [
+        "barn",
+        "greenhouse",
+        "shed",
+        "coop",
+        "fence",
+        "gate",
+        "road",
+        "bridge",
+        "solar_array",
+        "wind_turbine",
+        "root_cellar",
+        "smokehouse",
+        "workshop",
+        "storage",
+        "other"
+      ],
+      "description": "Type of infrastructure"
+    },
+    "latitude": {
+      "type": "number"
+    },
+    "longitude": {
+      "type": "number"
+    },
+    "dimensions": {
+      "type": "string"
+    },
+    "construction_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "construction_cost": {
+      "type": "number"
+    },
+    "materials": {
+      "type": "string"
+    },
+    "condition": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor",
+        "needs_replacement"
+      ],
+      "description": "Current condition"
+    },
+    "last_maintenance_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "maintenance_schedule": {
+      "type": "string"
+    },
+    "capacity": {
+      "type": "string",
+      "description": "Storage capacity, animal capacity, power output, etc."
+    },
+    "current_use": {
+      "type": "string"
+    },
+    "utilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Electric, water, HVAC, etc."
+    },
+    "insurance_value": {
+      "type": "number"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated maintenance and improvement suggestions"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "structure_name",
+    "structure_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

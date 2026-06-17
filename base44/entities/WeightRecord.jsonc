@@ -1,0 +1,61 @@
+{
+  "name": "WeightRecord",
+  "type": "object",
+  "properties": {
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of the livestock"
+    },
+    "weight": {
+      "type": "number",
+      "description": "Weight measurement"
+    },
+    "weight_unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "kg"
+      ],
+      "default": "lbs"
+    },
+    "measurement_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about weight measurement"
+    }
+  },
+  "required": [
+    "livestock_id",
+    "weight",
+    "measurement_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

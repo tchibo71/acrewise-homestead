@@ -1,0 +1,89 @@
+{
+  "name": "ForumPost",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Post title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Post content in markdown"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "composting",
+        "gardening",
+        "raised_beds",
+        "biointensive",
+        "harvesting",
+        "livestock",
+        "water_management",
+        "greenhouse",
+        "property_engineering",
+        "general_discussion",
+        "tips_tricks",
+        "questions"
+      ],
+      "description": "Post category"
+    },
+    "post_type": {
+      "type": "string",
+      "enum": [
+        "question",
+        "experience",
+        "tip",
+        "discussion"
+      ],
+      "description": "Type of post"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Author's name"
+    },
+    "upvotes": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of upvotes"
+    },
+    "view_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of views"
+    },
+    "is_resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "For questions - has it been resolved"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Post tags"
+    }
+  },
+  "required": [
+    "title",
+    "content",
+    "category",
+    "post_type"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "name": "DisclaimerAcceptance",
+  "type": "object",
+  "properties": {
+    "scenario_analysis_id": {
+      "type": "string",
+      "description": "ID of the scenario analysis this relates to"
+    },
+    "disclaimer_text": {
+      "type": "string",
+      "description": "Full text of the disclaimer accepted"
+    },
+    "user_ip_address": {
+      "type": "string",
+      "description": "IP address of user at time of acceptance"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of user who accepted"
+    },
+    "acceptance_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Exact timestamp of acceptance"
+    },
+    "scenario_summary": {
+      "type": "string",
+      "description": "Brief summary of what the overridden scenario was about"
+    },
+    "expires_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when this record will be deleted (1 year from acceptance)"
+    }
+  },
+  "required": [
+    "scenario_analysis_id",
+    "disclaimer_text",
+    "user_email",
+    "acceptance_timestamp"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

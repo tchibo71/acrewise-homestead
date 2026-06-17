@@ -1,0 +1,86 @@
+{
+  "name": "FarmHistory",
+  "type": "object",
+  "properties": {
+    "event_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "ownership_change",
+        "major_improvement",
+        "catastrophe",
+        "emergency",
+        "success",
+        "failure",
+        "milestone",
+        "maintenance",
+        "other"
+      ],
+      "description": "Type of historical event"
+    },
+    "title": {
+      "type": "string",
+      "description": "Event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "financial_impact": {
+      "type": "number",
+      "description": "Financial impact (positive or negative)"
+    },
+    "lessons_learned": {
+      "type": "string",
+      "description": "What was learned from this event"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photo URLs"
+    },
+    "related_entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Related livestock, crops, infrastructure IDs"
+    }
+  },
+  "required": [
+    "event_date",
+    "event_type",
+    "title"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

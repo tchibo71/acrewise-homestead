@@ -1,0 +1,122 @@
+{
+  "name": "MarketingPlan",
+  "type": "object",
+  "properties": {
+    "product_name": {
+      "type": "string",
+      "description": "Specific product (e.g., 'Pastured Chicken - Whole', 'Raw Honey', 'Grass-fed Beef - Ribeye Steak')"
+    },
+    "product_category": {
+      "type": "string",
+      "enum": [
+        "meat",
+        "eggs",
+        "dairy",
+        "produce",
+        "value_added",
+        "fiber",
+        "other"
+      ]
+    },
+    "sales_channel": {
+      "type": "string",
+      "enum": [
+        "direct_consumer",
+        "farmers_market",
+        "csa",
+        "restaurant",
+        "wholesale",
+        "online",
+        "farm_store",
+        "other"
+      ]
+    },
+    "price_per_unit": {
+      "type": "number"
+    },
+    "unit_type": {
+      "type": "string",
+      "description": "lb, dozen, gallon, each, etc."
+    },
+    "target_customer": {
+      "type": "string",
+      "description": "Description of ideal customer"
+    },
+    "unique_selling_points": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "distribution_method": {
+      "type": "string",
+      "description": "How product gets to customer"
+    },
+    "packaging": {
+      "type": "string"
+    },
+    "labeling_requirements": {
+      "type": "string"
+    },
+    "marketing_materials": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Brochures, social media, website, etc."
+    },
+    "competitor_analysis": {
+      "type": "string"
+    },
+    "pricing_strategy": {
+      "type": "string"
+    },
+    "promotion_plan": {
+      "type": "string"
+    },
+    "seasonal_availability": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "annual_production_goal": {
+      "type": "number"
+    },
+    "ai_marketing_analysis": {
+      "type": "string",
+      "description": "AI-generated marketing strategy and recommendations"
+    }
+  },
+  "required": [
+    "product_name",
+    "product_category",
+    "sales_channel"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

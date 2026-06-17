@@ -1,0 +1,167 @@
+{
+  "name": "Livestock",
+  "type": "object",
+  "properties": {
+    "animal_type": {
+      "type": "string",
+      "enum": [
+        "chicken",
+        "goat",
+        "sheep",
+        "pig",
+        "cow",
+        "rabbit",
+        "duck",
+        "turkey",
+        "bee_hive",
+        "other"
+      ],
+      "description": "Type of livestock"
+    },
+    "animal_type_other": {
+      "type": "string",
+      "description": "Specify animal type if 'other' is selected"
+    },
+    "name_or_tag": {
+      "type": "string",
+      "description": "Name or identification tag"
+    },
+    "breed": {
+      "type": "string",
+      "description": "Breed of animal"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "unknown"
+      ],
+      "description": "Gender of animal"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of birth or acquisition"
+    },
+    "birth_weight": {
+      "type": "number",
+      "description": "Birth weight in pounds/kg"
+    },
+    "current_weight": {
+      "type": "number",
+      "description": "Current weight in pounds/kg"
+    },
+    "weight_unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "kg"
+      ],
+      "default": "lbs"
+    },
+    "mother_id": {
+      "type": "string",
+      "description": "ID of mother animal"
+    },
+    "father_id": {
+      "type": "string",
+      "description": "ID of father animal"
+    },
+    "mother_name": {
+      "type": "string",
+      "description": "Name of mother (if not in system)"
+    },
+    "father_name": {
+      "type": "string",
+      "description": "Name of father (if not in system)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "sold",
+        "deceased",
+        "butchered"
+      ],
+      "default": "active"
+    },
+    "purpose": {
+      "type": "string",
+      "enum": [
+        "meat",
+        "dairy",
+        "eggs",
+        "breeding",
+        "fiber",
+        "pets",
+        "multiple"
+      ],
+      "description": "Primary purpose"
+    },
+    "insurance_policy_number": {
+      "type": "string",
+      "description": "Insurance policy number for this animal"
+    },
+    "insurance_company": {
+      "type": "string",
+      "description": "Insurance company name"
+    },
+    "insurance_value": {
+      "type": "number",
+      "description": "Insured value of animal"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "acquisition_cost": {
+      "type": "number",
+      "description": "Cost to acquire animal"
+    },
+    "acquisition_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "animal_type",
+    "name_or_tag"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

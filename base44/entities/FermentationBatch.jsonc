@@ -1,0 +1,209 @@
+{
+  "name": "FermentationBatch",
+  "type": "object",
+  "properties": {
+    "batch_name": {
+      "type": "string",
+      "description": "Name or identifier for this fermentation batch"
+    },
+    "fermentation_type": {
+      "type": "string",
+      "enum": [
+        "sauerkraut",
+        "kimchi",
+        "pickles",
+        "hot_sauce",
+        "salsa",
+        "carrots",
+        "beets",
+        "mixed_vegetables",
+        "sourdough",
+        "kombucha",
+        "other"
+      ],
+      "description": "Type of fermentation"
+    },
+    "primary_produce": {
+      "type": "string",
+      "description": "Main vegetable or ingredient being fermented"
+    },
+    "ingredients": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ingredient_name": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "weight_unit": {
+            "type": "string",
+            "enum": [
+              "lbs",
+              "oz",
+              "kg",
+              "g"
+            ],
+            "default": "lbs"
+          }
+        }
+      },
+      "description": "List of all ingredients with individual weights"
+    },
+    "total_weight": {
+      "type": "number",
+      "description": "Total weight of all ingredients combined"
+    },
+    "total_weight_unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "oz",
+        "kg",
+        "g"
+      ],
+      "default": "lbs"
+    },
+    "salt_weight": {
+      "type": "number",
+      "description": "Weight of salt used"
+    },
+    "salt_percentage": {
+      "type": "number",
+      "description": "Salt as percentage of total vegetable weight (typically 2-3%)"
+    },
+    "brine_type": {
+      "type": "string",
+      "enum": [
+        "dry_salt",
+        "brine_solution",
+        "no_salt"
+      ],
+      "default": "dry_salt",
+      "description": "Method of salting"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When fermentation began"
+    },
+    "target_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected completion date"
+    },
+    "actual_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When fermentation actually completed"
+    },
+    "fermentation_days": {
+      "type": "number",
+      "description": "Total days fermented"
+    },
+    "container_type": {
+      "type": "string",
+      "description": "Jar, crock, bucket, etc."
+    },
+    "container_size": {
+      "type": "string",
+      "description": "Size of container used"
+    },
+    "fermentation_temperature": {
+      "type": "number",
+      "description": "Average temperature in Fahrenheit"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "completed",
+        "failed",
+        "refrigerated"
+      ],
+      "default": "active"
+    },
+    "problems_encountered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of issues during fermentation"
+    },
+    "solutions_applied": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "How problems were resolved"
+    },
+    "taste_notes": {
+      "type": "string",
+      "description": "Flavor profile and quality notes"
+    },
+    "texture_notes": {
+      "type": "string",
+      "description": "Texture evaluation"
+    },
+    "success_rating": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Overall success rating 1-5"
+    },
+    "would_repeat": {
+      "type": "boolean",
+      "description": "Would you make this recipe again"
+    },
+    "recipe_notes": {
+      "type": "string",
+      "description": "Recipe details, spices, special techniques"
+    },
+    "general_notes": {
+      "type": "string",
+      "description": "General observations and notes"
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photo URLs of fermentation process"
+    }
+  },
+  "required": [
+    "batch_name",
+    "fermentation_type",
+    "primary_produce",
+    "start_date",
+    "salt_percentage"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

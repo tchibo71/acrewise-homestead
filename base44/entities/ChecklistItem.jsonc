@@ -1,0 +1,181 @@
+{
+  "name": "ChecklistItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Task title"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "composting",
+        "gardening",
+        "raised_beds",
+        "biointensive",
+        "harvesting",
+        "livestock",
+        "water_management",
+        "greenhouse",
+        "property_engineering",
+        "daily_tasks",
+        "seasonal_tasks"
+      ],
+      "description": "Task category"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly",
+        "seasonal",
+        "one_time",
+        "custom"
+      ],
+      "description": "How often the task should be done"
+    },
+    "custom_interval_weeks": {
+      "type": "number",
+      "description": "For custom frequency - interval in weeks"
+    },
+    "custom_interval_days": {
+      "type": "number",
+      "description": "For custom frequency - additional days beyond weeks"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "spring",
+        "summer",
+        "fall",
+        "winter",
+        "year_round"
+      ],
+      "description": "Relevant season"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "completed": {
+      "type": "boolean",
+      "default": false
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Most recent completion date"
+    },
+    "last_completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Previous completion date for tracking"
+    },
+    "next_due_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Calculated next due date for recurring tasks"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes for this task"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "livestock_id": {
+      "type": "string",
+      "description": "If task is for specific animal, the animal's ID"
+    },
+    "animal_specific_notes": {
+      "type": "string",
+      "description": "Notes specific to the animal for this task"
+    },
+    "alert_days_before": {
+      "type": "number",
+      "default": 3,
+      "description": "How many days before due date to show alert"
+    },
+    "enable_reminders": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to show reminders for this task"
+    },
+    "completion_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "completed_on": {
+            "type": "string",
+            "format": "date"
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "History of task completions"
+    },
+    "assigned_to_user_id": {
+      "type": "string",
+      "description": "User ID of team member assigned to this task"
+    },
+    "assigned_to_email": {
+      "type": "string",
+      "description": "Email of team member assigned to this task"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "title",
+    "category",
+    "frequency"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "assigned_to_email": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

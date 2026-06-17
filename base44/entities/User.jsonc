@@ -1,0 +1,28 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "property_latitude": {
+      "type": "number",
+      "description": "Property latitude for weather forecasts"
+    },
+    "property_longitude": {
+      "type": "number",
+      "description": "Property longitude for weather forecasts"
+    },
+    "weather_alerts_enabled": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable weather alerts and notifications"
+    },
+    "frost_alert_threshold": {
+      "type": "number",
+      "default": 32,
+      "description": "Temperature threshold for frost alerts (Fahrenheit)"
+    }
+  },
+  "required": [
+    "property_latitude",
+    "property_longitude"
+  ]
+}

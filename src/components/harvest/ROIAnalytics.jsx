@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Sprout, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, DollarSign, Sprout, Target, Package } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 export default function ROIAnalytics() {
@@ -34,6 +35,11 @@ export default function ROIAnalytics() {
       const txns = await base44.entities.FinancialTransaction.list('-transaction_date');
       return txns.filter(t => t.transaction_type === 'expense');
     },
+  });
+
+  const { data: livestock = [] } = useQuery({
+    queryKey: ['livestock'],
+    queryFn: () => base44.entities.Livestock.list(),
   });
 
   // Lazy calculations - only run when user requests

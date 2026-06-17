@@ -1,0 +1,74 @@
+{
+  "name": "EstrousCycle",
+  "type": "object",
+  "properties": {
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of the female animal"
+    },
+    "cycle_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Start of estrous cycle"
+    },
+    "cycle_length_days": {
+      "type": "number",
+      "description": "Length of cycle in days"
+    },
+    "heat_duration_days": {
+      "type": "number",
+      "description": "Duration of heat/estrus"
+    },
+    "next_predicted_heat": {
+      "type": "string",
+      "format": "date",
+      "description": "AI-predicted next heat date"
+    },
+    "cycle_type": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "predicted"
+      ],
+      "default": "observed",
+      "description": "Whether this is observed or AI-predicted"
+    },
+    "breeding_occurred": {
+      "type": "boolean",
+      "default": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "livestock_id",
+    "cycle_start_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

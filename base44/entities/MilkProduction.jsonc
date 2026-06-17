@@ -1,0 +1,132 @@
+{
+  "name": "MilkProduction",
+  "type": "object",
+  "properties": {
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of the dairy animal"
+    },
+    "production_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of milk production"
+    },
+    "milking_session": {
+      "type": "string",
+      "enum": [
+        "am",
+        "pm",
+        "midday",
+        "full_day"
+      ],
+      "default": "am",
+      "description": "Which milking session"
+    },
+    "milk_weight_lbs": {
+      "type": "number",
+      "description": "Weight of milk produced in pounds"
+    },
+    "milk_weight_gallons": {
+      "type": "number",
+      "description": "Volume in gallons"
+    },
+    "unit_entered": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "gallons"
+      ],
+      "default": "lbs",
+      "description": "Which unit the user entered"
+    },
+    "butterfat_percentage": {
+      "type": "number",
+      "description": "Butterfat percentage (e.g., 4.5)"
+    },
+    "protein_percentage": {
+      "type": "number",
+      "description": "Protein percentage"
+    },
+    "somatic_cell_count": {
+      "type": "number",
+      "description": "SCC - indicator of milk quality and udder health"
+    },
+    "a2a2_status": {
+      "type": "string",
+      "enum": [
+        "A2A2",
+        "A1A2",
+        "A1A1",
+        "unknown"
+      ],
+      "description": "A2 beta-casein genetic status"
+    },
+    "lactation_day": {
+      "type": "number",
+      "description": "Days in milk (DIM) since calving"
+    },
+    "lactation_number": {
+      "type": "number",
+      "description": "Which lactation cycle (1st, 2nd, 3rd, etc.)"
+    },
+    "temperature": {
+      "type": "number",
+      "description": "Milk temperature at collection"
+    },
+    "quality_grade": {
+      "type": "string",
+      "enum": [
+        "excellent",
+        "good",
+        "fair",
+        "poor"
+      ],
+      "description": "Overall quality assessment"
+    },
+    "milker_name": {
+      "type": "string",
+      "description": "Person who did the milking"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Any observations or notes"
+    },
+    "health_concerns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Any health issues noted during milking"
+    }
+  },
+  "required": [
+    "livestock_id",
+    "production_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

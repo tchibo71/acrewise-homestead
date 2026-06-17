@@ -1,0 +1,115 @@
+{
+  "name": "FarmGoal",
+  "type": "object",
+  "properties": {
+    "goal_title": {
+      "type": "string",
+      "description": "Title of the goal"
+    },
+    "goal_type": {
+      "type": "string",
+      "enum": [
+        "production",
+        "financial",
+        "infrastructure",
+        "sustainability",
+        "marketing",
+        "animal_welfare",
+        "soil_health",
+        "other"
+      ],
+      "description": "Category of goal"
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When work on this goal begins"
+    },
+    "target_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Legacy field - use target_completion_date instead"
+    },
+    "target_completion_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Target date for completing this goal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "on_hold",
+        "cancelled"
+      ],
+      "default": "not_started"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium"
+    },
+    "measurable_target": {
+      "type": "string",
+      "description": "Specific measurable outcome"
+    },
+    "current_progress": {
+      "type": "number",
+      "description": "Progress percentage 0-100"
+    },
+    "estimated_cost": {
+      "type": "number"
+    },
+    "actual_cost": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "completed_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "goal_title",
+    "goal_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

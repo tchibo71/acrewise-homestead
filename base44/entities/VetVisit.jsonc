@@ -1,0 +1,89 @@
+{
+  "name": "VetVisit",
+  "type": "object",
+  "properties": {
+    "livestock_id": {
+      "type": "string",
+      "description": "ID of the livestock"
+    },
+    "visit_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "visit_type": {
+      "type": "string",
+      "enum": [
+        "checkup",
+        "illness",
+        "injury",
+        "surgery",
+        "emergency",
+        "vaccination",
+        "other"
+      ],
+      "description": "Type of visit"
+    },
+    "veterinarian_name": {
+      "type": "string",
+      "description": "Name of veterinarian"
+    },
+    "diagnosis": {
+      "type": "string",
+      "description": "Diagnosis or findings"
+    },
+    "treatment": {
+      "type": "string",
+      "description": "Treatment provided"
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Medications prescribed"
+    },
+    "cost": {
+      "type": "number",
+      "description": "Cost of visit"
+    },
+    "follow_up_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled follow-up date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "livestock_id",
+    "visit_date",
+    "visit_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "name": "FinancialTransaction",
+  "type": "object",
+  "properties": {
+    "transaction_type": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense"
+      ],
+      "description": "Type of transaction"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "feed",
+        "veterinary",
+        "equipment",
+        "seeds_plants",
+        "fertilizer",
+        "livestock_purchase",
+        "infrastructure",
+        "utilities",
+        "labor",
+        "sales",
+        "products",
+        "other"
+      ],
+      "description": "Transaction category"
+    },
+    "transaction_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Transaction amount"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of transaction"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "cash",
+        "check",
+        "credit_card",
+        "bank_transfer",
+        "other"
+      ]
+    },
+    "vendor_customer": {
+      "type": "string",
+      "description": "Who you paid or who paid you"
+    },
+    "receipt_number": {
+      "type": "string",
+      "description": "Receipt or invoice number"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "livestock_id": {
+      "type": "string",
+      "description": "Related livestock ID if applicable"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "transaction_type",
+    "category",
+    "transaction_date",
+    "amount"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

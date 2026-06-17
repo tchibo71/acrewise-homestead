@@ -1,0 +1,95 @@
+{
+  "name": "EquipmentMaintenance",
+  "type": "object",
+  "properties": {
+    "equipment_id": {
+      "type": "string",
+      "description": "ID of the equipment"
+    },
+    "maintenance_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "maintenance_type": {
+      "type": "string",
+      "enum": [
+        "routine",
+        "repair",
+        "inspection",
+        "calibration",
+        "upgrade",
+        "emergency"
+      ],
+      "description": "Type of maintenance"
+    },
+    "description": {
+      "type": "string",
+      "description": "What was done"
+    },
+    "performed_by": {
+      "type": "string",
+      "description": "Who performed the maintenance"
+    },
+    "cost": {
+      "type": "number"
+    },
+    "parts_used": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "cost": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "labor_hours": {
+      "type": "number"
+    },
+    "next_maintenance_due": {
+      "type": "string",
+      "format": "date"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "equipment_id",
+    "maintenance_date",
+    "maintenance_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

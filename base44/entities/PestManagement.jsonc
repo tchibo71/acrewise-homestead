@@ -1,0 +1,100 @@
+{
+  "name": "PestManagement",
+  "type": "object",
+  "properties": {
+    "date_identified": {
+      "type": "string",
+      "format": "date"
+    },
+    "pest_type": {
+      "type": "string",
+      "enum": [
+        "insect",
+        "disease",
+        "weed",
+        "rodent",
+        "bird",
+        "parasite",
+        "other"
+      ]
+    },
+    "pest_name": {
+      "type": "string"
+    },
+    "affected_crop_or_animal": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "minor",
+        "moderate",
+        "severe",
+        "critical"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "treatment_method": {
+      "type": "string"
+    },
+    "treatment_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "treatment_cost": {
+      "type": "number"
+    },
+    "effectiveness": {
+      "type": "string",
+      "enum": [
+        "not_effective",
+        "somewhat_effective",
+        "effective",
+        "very_effective"
+      ]
+    },
+    "prevention_measures": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated treatment and prevention strategies"
+    }
+  },
+  "required": [
+    "date_identified",
+    "pest_type",
+    "affected_crop_or_animal"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,135 @@
+{
+  "name": "FarmProfile",
+  "type": "object",
+  "properties": {
+    "farm_name": {
+      "type": "string",
+      "description": "Name of the farm"
+    },
+    "location_address": {
+      "type": "string",
+      "description": "Physical address"
+    },
+    "grid_coordinates": {
+      "type": "string",
+      "description": "GPS coordinates"
+    },
+    "plat_map_number": {
+      "type": "string",
+      "description": "Legal plat/parcel number"
+    },
+    "total_acreage": {
+      "type": "number",
+      "description": "Total farm acreage"
+    },
+    "usable_acreage": {
+      "type": "number",
+      "description": "Acreage available for production"
+    },
+    "labor_rate_per_hour": {
+      "type": "number",
+      "description": "Hourly labor rate in dollars for COGS calculations",
+      "default": 15
+    },
+    "soil_types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "soil_type": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "depth": {
+            "type": "string"
+          },
+          "acreage": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "infrastructure": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "condition": {
+            "type": "string",
+            "enum": [
+              "excellent",
+              "good",
+              "fair",
+              "poor"
+            ]
+          },
+          "year_built": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "water_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "source_type": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ai_recommendations": {
+      "type": "string",
+      "description": "AI-generated recommendations for improvements"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "farm_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
