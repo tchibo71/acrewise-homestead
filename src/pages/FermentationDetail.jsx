@@ -49,6 +49,11 @@ const typeEmojis = {
   fermented_sausage: "🌭",
   salami: "🥓",
   cured_meat: "🥩",
+  cheese_fresh: "🧀",
+  cheese_semi_hard: "🧀",
+  cheese_hard: "🧀",
+  cheese_blue: "🫕",
+  cheese_mold_ripened: "🧀",
   other: "🥫"
 };
 
@@ -164,15 +169,21 @@ export default function FermentationDetail() {
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">
-                  {batch.preservative_type === "sugar" ? "Sugar Percentage" : "Salt Percentage"}
+                  {batch.preservative_type === "sugar" ? "Sugar Percentage" : batch.preservative_type === "cure" ? "Curing Salt" : "Salt Percentage"}
                 </p>
                 <p className="text-lg font-semibold flex items-center gap-2">
                   <Droplets className="w-4 h-4 text-blue-400" />
                   {batch.preservative_type === "sugar"
                     ? `${batch.sugar_percentage ?? 0}%`
-                    : `${batch.salt_percentage ?? 0}%`}
+                    : batch.preservative_type === "cure"
+                      ? `${batch.cure_type === "cure_2" ? "Cure #2" : "Cure #1"}`
+                      : `${batch.salt_percentage ?? 0}%`}
                 </p>
-                {batch.preservative_type === "sugar" && batch.sugar_weight ? (
+                {batch.preservative_type === "cure" && batch.cure_weight ? (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {batch.cure_weight}g cure
+                  </p>
+                ) : batch.preservative_type === "sugar" && batch.sugar_weight ? (
                   <p className="text-xs text-gray-500 mt-1">
                     {batch.sugar_weight} {batch.total_weight_unit} sugar
                   </p>
@@ -203,6 +214,11 @@ export default function FermentationDetail() {
                     <ThermometerSun className="w-4 h-4 text-red-400" />
                     {batch.fermentation_temperature}°F
                   </p>
+                  {batch.aging_humidity && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {batch.aging_humidity}% RH humidity
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -228,6 +244,13 @@ export default function FermentationDetail() {
               <div className="mt-2 p-4 bg-red-50 rounded-lg">
                 <p className="text-sm font-semibold text-red-900 mb-1">Meat Type:</p>
                 <p className="text-red-800">{batch.meat_type}</p>
+              </div>
+            )}
+
+            {batch.culture_type && (
+              <div className="mt-2 p-4 bg-yellow-50 rounded-lg">
+                <p className="text-sm font-semibold text-yellow-900 mb-1">Starter Culture:</p>
+                <p className="text-yellow-800">{batch.culture_type}</p>
               </div>
             )}
 

@@ -55,7 +55,11 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
     smoking_temperature: null,
     smoking_duration_hours: null,
     wood_type: "",
-    meat_type: ""
+    meat_type: "",
+    culture_type: "",
+    cure_type: "",
+    cure_weight: 0,
+    aging_humidity: null
   });
 
   const [newIngredient, setNewIngredient] = useState({ ingredient_name: "", weight: "", weight_unit: "lbs" });
@@ -163,6 +167,8 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
   };
 
   const isMeatFerment = (type) => ["fermented_sausage", "salami", "cured_meat"].includes(type);
+  const isCheeseFerment = (type) => ["cheese_fresh", "cheese_semi_hard", "cheese_hard", "cheese_blue", "cheese_mold_ripened"].includes(type);
+  const needsAgingHumidity = (type) => isMeatFerment(type) || ["cheese_semi_hard", "cheese_hard", "cheese_blue", "cheese_mold_ripened"].includes(type);
 
   const addContainer = () => {
     if (newContainer.container_type && newContainer.container_size) {
@@ -278,6 +284,11 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       <SelectItem value="fermented_sausage">Fermented Sausage</SelectItem>
                       <SelectItem value="salami">Salami</SelectItem>
                       <SelectItem value="cured_meat">Cured Meat</SelectItem>
+                      <SelectItem value="cheese_fresh">Cheese — Fresh/Soft</SelectItem>
+                      <SelectItem value="cheese_semi_hard">Cheese — Semi-Hard</SelectItem>
+                      <SelectItem value="cheese_hard">Cheese — Hard</SelectItem>
+                      <SelectItem value="cheese_blue">Cheese — Blue</SelectItem>
+                      <SelectItem value="cheese_mold_ripened">Cheese — Mold Ripened</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -328,6 +339,17 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                     value={formData.meat_type}
                     onChange={(e) => setFormData({...formData, meat_type: e.target.value})}
                     placeholder="e.g., Pork, Beef, Venison"
+                  />
+                </div>
+              )}
+
+              {isCheeseFerment(formData.fermentation_type) && (
+                <div>
+                  <Label>Culture Type</Label>
+                  <Input
+                    value={formData.culture_type}
+                    onChange={(e) => setFormData({...formData, culture_type: e.target.value})}
+                    placeholder="e.g., Mesophilic, Thermophilic, MA 4002, Fromage Blanc"
                   />
                 </div>
               )}
@@ -409,6 +431,12 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       <span className="ml-2 font-semibold">{formData.sugar_weight} {formData.total_weight_unit}</span>
                     </div>
                   )}
+                  {formData.preservative_type === "cure" && (
+                    <div>
+                      <span className="text-blue-700">Cure Needed:</span>
+                      <span className="ml-2 font-semibold">{formData.cure_weight}g</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -421,11 +449,12 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                   <SelectContent>
                     <SelectItem value="salt">Salt (vegetable ferments)</SelectItem>
                     <SelectItem value="sugar">Sugar (fruit/beverage ferments)</SelectItem>
+                    <SelectItem value="cure">Cure (meat curing — nitrite/nitrate)</SelectItem>
                     <SelectItem value="none">None</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Salt for sauerkraut/pickles, sugar for grape juice/wine/cider/mead
+                  Salt for sauerkraut/pickles, sugar for fruit/wine/cider, cure #1/#2 for meat safety
                 </p>
               </div>
 
@@ -454,6 +483,39 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+              )}
+
+              {formData.preservative_type === "cure" && (
+                <div className="bg-red-50 p-4 rounded-lg space-y-4">
+                  <p className="text-xs text-red-700 font-medium">
+                    ⚠️ Curing salts (nitrite/nitrate) are essential for preventing botulism in fermented meats. Always weigh precisely — never exceed recommended amounts.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Cure Type</Label>
+                      <Select value={formData.cure_type} onValueChange={(value) => setFormData({...formData, cure_type: value})}>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cure_1">Cure #1 (Sodium Nitrite — short-term)</SelectItem>
+                          <SelectItem value="cure_2">Cure #2 (Sodium Nitrate — dry-cured/aged)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Cure Weight (grams)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        value={formData.cure_weight || ""}
+                        onChange={(e) => setFormData({...formData, cure_weight: parseFloat(e.target.value) || 0})}
+                        placeholder="e.g., 2.5"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Typical: ~0.25% of meat weight for Cure #1. Use Cure #2 for products aged over 30 days.
+                  </p>
                 </div>
               )}
 
@@ -615,6 +677,21 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                   />
                 </div>
               </div>
+
+              {needsAgingHumidity(formData.fermentation_type) && (
+                <div>
+                  <Label>Aging Humidity (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={formData.aging_humidity || ""}
+                    onChange={(e) => setFormData({...formData, aging_humidity: parseFloat(e.target.value) || null})}
+                    placeholder="e.g., 80 (typical 75-85% for dry-cured meats and aged cheese)"
+                  />
+                </div>
+              )}
 
               <div>
                 <Label>Recipe Notes</Label>

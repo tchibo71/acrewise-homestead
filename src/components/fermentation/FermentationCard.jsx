@@ -39,6 +39,11 @@ const typeEmojis = {
   fermented_sausage: "🌭",
   salami: "🥓",
   cured_meat: "🥩",
+  cheese_fresh: "🧀",
+  cheese_semi_hard: "🧀",
+  cheese_hard: "🧀",
+  cheese_blue: "🫕",
+  cheese_mold_ripened: "🧀",
   other: "🥫"
 };
 
@@ -77,9 +82,11 @@ export default function FermentationCard({ batch, onEdit }) {
             <span>
               {batch.preservative_type === "sugar"
                 ? `${batch.sugar_percentage ?? 0}% sugar`
-                : batch.preservative_type === "none"
-                  ? "no preservative"
-                  : `${batch.salt_percentage ?? 0}% salt`}
+                : batch.preservative_type === "cure"
+                  ? `${batch.cure_type === "cure_2" ? "Cure #2" : "Cure #1"} (${batch.cure_weight ?? 0}g)`
+                  : batch.preservative_type === "none"
+                    ? "no preservative"
+                    : `${batch.salt_percentage ?? 0}% salt`}
             </span>
           </div>
           

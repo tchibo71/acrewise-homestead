@@ -28,6 +28,11 @@
         "fermented_sausage",
         "salami",
         "cured_meat",
+        "cheese_fresh",
+        "cheese_semi_hard",
+        "cheese_hard",
+        "cheese_blue",
+        "cheese_mold_ripened",
         "other"
       ],
       "description": "Type of fermentation"
@@ -39,6 +44,10 @@
     "meat_type": {
       "type": "string",
       "description": "Type of meat for fermented meat products (e.g., Pork, Beef, Venison)"
+    },
+    "culture_type": {
+      "type": "string",
+      "description": "Starter culture used (e.g., Mesophilic, Thermophilic, MA 4002, Fromage Blanc)"
     },
     "ingredients": {
       "type": "array",
@@ -84,10 +93,11 @@
       "enum": [
         "salt",
         "sugar",
+        "cure",
         "none"
       ],
       "default": "salt",
-      "description": "Primary preservative agent: salt (vegetable ferments), sugar (fruit/beverage ferments), or none"
+      "description": "Primary preservative agent: salt (vegetable ferments), sugar (fruit/beverage ferments), cure (meat curing - nitrite/nitrate), or none"
     },
     "salt_weight": {
       "type": "number",
@@ -114,6 +124,18 @@
     "sugar_percentage": {
       "type": "number",
       "description": "Sugar as percentage of total weight (for fruit/beverage ferments)"
+    },
+    "cure_type": {
+      "type": "string",
+      "enum": [
+        "cure_1",
+        "cure_2"
+      ],
+      "description": "Cure #1 (sodium nitrite) for short-term cured meats, Cure #2 (sodium nitrate) for dry-cured/aged meats"
+    },
+    "cure_weight": {
+      "type": "number",
+      "description": "Weight of curing salt used (in grams or oz)"
     },
     "start_date": {
       "type": "string",
@@ -167,6 +189,10 @@
     "fermentation_temperature": {
       "type": "number",
       "description": "Average temperature in Fahrenheit"
+    },
+    "aging_humidity": {
+      "type": "number",
+      "description": "Aging/curing humidity percentage (typically 75-85% for dry-cured meats and aged cheese)"
     },
     "is_smoked": {
       "type": "boolean",
