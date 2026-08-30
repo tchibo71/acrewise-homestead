@@ -21,6 +21,7 @@ import {
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import { geocodeAddress } from "@/components/utils/mapboxConfig";
 import PaywallModal from "../components/paywall/PaywallModal";
+import PhotoAnalysisUploader from "@/components/farm-profile/PhotoAnalysisUploader";
 
 export default function FarmProfile() {
   const queryClient = useQueryClient();
@@ -333,6 +334,11 @@ Format as clear, numbered sections with specific actionable advice.`;
             </CardContent>
           </Card>
         )}
+
+        <PhotoAnalysisUploader
+          formData={formData}
+          onApply={(newData) => setFormData(newData)}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
