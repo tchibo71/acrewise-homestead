@@ -30,6 +30,11 @@ const typeEmojis = {
   mixed_vegetables: "🥗",
   sourdough: "🍞",
   kombucha: "🫖",
+  grape_juice: "🍇",
+  wine: "🍷",
+  cider: "🍎",
+  mead: "🍯",
+  vinegar: "🧪",
   other: "🥫"
 };
 
@@ -65,7 +70,13 @@ export default function FermentationCard({ batch, onEdit }) {
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2 text-gray-600">
             <Droplets className="w-4 h-4" />
-            <span>{batch.salt_percentage}% salt</span>
+            <span>
+              {batch.preservative_type === "sugar"
+                ? `${batch.sugar_percentage ?? 0}% sugar`
+                : batch.preservative_type === "none"
+                  ? "no preservative"
+                  : `${batch.salt_percentage ?? 0}% salt`}
+            </span>
           </div>
           
           {batch.fermentation_temperature && (

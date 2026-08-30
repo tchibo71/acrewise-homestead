@@ -27,9 +27,12 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
     ingredients: [],
     total_weight: 0,
     total_weight_unit: "lbs",
+    preservative_type: "salt",
     salt_weight: 0,
     salt_percentage: 2.5,
     brine_type: "dry_salt",
+    sugar_weight: 0,
+    sugar_percentage: 0,
     start_date: new Date().toISOString().split('T')[0],
     target_completion_date: "",
     actual_completion_date: "",
@@ -80,6 +83,14 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
       setFormData(prev => ({ ...prev, salt_weight: parseFloat(saltWeight.toFixed(2)) }));
     }
   }, [formData.total_weight, formData.salt_percentage]);
+
+  // Calculate sugar weight from percentage
+  useEffect(() => {
+    if (formData.total_weight && formData.sugar_percentage) {
+      const sugarWeight = (formData.total_weight * formData.sugar_percentage) / 100;
+      setFormData(prev => ({ ...prev, sugar_weight: parseFloat(sugarWeight.toFixed(2)) }));
+    }
+  }, [formData.total_weight, formData.sugar_percentage]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -231,6 +242,11 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       <SelectItem value="mixed_vegetables">Mixed Vegetables</SelectItem>
                       <SelectItem value="sourdough">Sourdough</SelectItem>
                       <SelectItem value="kombucha">Kombucha</SelectItem>
+                      <SelectItem value="grape_juice">Grape Juice</SelectItem>
+                      <SelectItem value="wine">Wine</SelectItem>
+                      <SelectItem value="cider">Cider</SelectItem>
+                      <SelectItem value="mead">Mead</SelectItem>
+                      <SelectItem value="vinegar">Vinegar</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -339,39 +355,90 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                     <span className="text-blue-700">Total Weight:</span>
                     <span className="ml-2 font-semibold">{formData.total_weight} {formData.total_weight_unit}</span>
                   </div>
+                  {formData.preservative_type === "salt" && (
+                    <div>
+                      <span className="text-blue-700">Salt Needed:</span>
+                      <span className="ml-2 font-semibold">{formData.salt_weight} {formData.total_weight_unit}</span>
+                    </div>
+                  )}
+                  {formData.preservative_type === "sugar" && (
+                    <div>
+                      <span className="text-blue-700">Sugar Needed:</span>
+                      <span className="ml-2 font-semibold">{formData.sugar_weight} {formData.total_weight_unit}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>Preservative Type</Label>
+                <Select value={formData.preservative_type} onValueChange={(value) => setFormData({...formData, preservative_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="salt">Salt (vegetable ferments)</SelectItem>
+                    <SelectItem value="sugar">Sugar (fruit/beverage ferments)</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Salt for sauerkraut/pickles, sugar for grape juice/wine/cider/mead
+                </p>
+              </div>
+
+              {formData.preservative_type === "salt" && (
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-blue-700">Salt Needed:</span>
-                    <span className="ml-2 font-semibold">{formData.salt_weight} {formData.total_weight_unit}</span>
+                    <Label>Salt Percentage (typically 2-3%)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.salt_percentage}
+                      onChange={(e) => setFormData({...formData, salt_percentage: parseFloat(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Brine Type</Label>
+                    <Select value={formData.brine_type} onValueChange={(value) => setFormData({...formData, brine_type: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dry_salt">Dry Salt</SelectItem>
+                        <SelectItem value="brine_solution">Brine Solution</SelectItem>
+                        <SelectItem value="no_salt">No Salt</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Salt Percentage * (typically 2-3%)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.salt_percentage}
-                    onChange={(e) => setFormData({...formData, salt_percentage: parseFloat(e.target.value)})}
-                    required
-                  />
+              {formData.preservative_type === "sugar" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Sugar Percentage (varies by recipe)</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.sugar_percentage}
+                      onChange={(e) => setFormData({...formData, sugar_percentage: parseFloat(e.target.value)})}
+                      placeholder="e.g., 15"
+                    />
+                  </div>
+                  <div>
+                    <Label>Sugar Weight ({formData.total_weight_unit})</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.sugar_weight}
+                      onChange={(e) => setFormData({...formData, sugar_weight: parseFloat(e.target.value)})}
+                      placeholder="auto-calculated"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <Label>Brine Type</Label>
-                  <Select value={formData.brine_type} onValueChange={(value) => setFormData({...formData, brine_type: value})}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dry_salt">Dry Salt</SelectItem>
-                      <SelectItem value="brine_solution">Brine Solution</SelectItem>
-                      <SelectItem value="no_salt">No Salt</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              )}
             </TabsContent>
 
             <TabsContent value="process" className="space-y-4">

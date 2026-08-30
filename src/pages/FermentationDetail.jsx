@@ -40,6 +40,11 @@ const typeEmojis = {
   mixed_vegetables: "🥗",
   sourdough: "🍞",
   kombucha: "🫖",
+  grape_juice: "🍇",
+  wine: "🍷",
+  cider: "🍎",
+  mead: "🍯",
+  vinegar: "🧪",
   other: "🥫"
 };
 
@@ -154,16 +159,24 @@ export default function FermentationDetail() {
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <p className="text-sm text-gray-600 mb-1">Salt Percentage</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  {batch.preservative_type === "sugar" ? "Sugar Percentage" : "Salt Percentage"}
+                </p>
                 <p className="text-lg font-semibold flex items-center gap-2">
                   <Droplets className="w-4 h-4 text-blue-400" />
-                  {batch.salt_percentage}%
+                  {batch.preservative_type === "sugar"
+                    ? `${batch.sugar_percentage ?? 0}%`
+                    : `${batch.salt_percentage ?? 0}%`}
                 </p>
-                {batch.salt_weight && (
+                {batch.preservative_type === "sugar" && batch.sugar_weight ? (
+                  <p className="text-xs text-gray-500 mt-1">
+                    {batch.sugar_weight} {batch.total_weight_unit} sugar
+                  </p>
+                ) : batch.salt_weight ? (
                   <p className="text-xs text-gray-500 mt-1">
                     {batch.salt_weight} {batch.total_weight_unit} salt
                   </p>
-                )}
+                ) : null}
               </div>
 
               <div>

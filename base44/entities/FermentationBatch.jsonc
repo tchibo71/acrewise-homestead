@@ -19,13 +19,18 @@
         "mixed_vegetables",
         "sourdough",
         "kombucha",
+        "grape_juice",
+        "wine",
+        "cider",
+        "mead",
+        "vinegar",
         "other"
       ],
       "description": "Type of fermentation"
     },
     "primary_produce": {
       "type": "string",
-      "description": "Main vegetable or ingredient being fermented"
+      "description": "Main vegetable, fruit, or ingredient being fermented"
     },
     "ingredients": {
       "type": "array",
@@ -66,6 +71,16 @@
       ],
       "default": "lbs"
     },
+    "preservative_type": {
+      "type": "string",
+      "enum": [
+        "salt",
+        "sugar",
+        "none"
+      ],
+      "default": "salt",
+      "description": "Primary preservative agent: salt (vegetable ferments), sugar (fruit/beverage ferments), or none"
+    },
     "salt_weight": {
       "type": "number",
       "description": "Weight of salt used"
@@ -83,6 +98,14 @@
       ],
       "default": "dry_salt",
       "description": "Method of salting"
+    },
+    "sugar_weight": {
+      "type": "number",
+      "description": "Weight of sugar used"
+    },
+    "sugar_percentage": {
+      "type": "number",
+      "description": "Sugar as percentage of total weight (for fruit/beverage ferments)"
     },
     "start_date": {
       "type": "string",
@@ -177,8 +200,7 @@
     "batch_name",
     "fermentation_type",
     "primary_produce",
-    "start_date",
-    "salt_percentage"
+    "start_date"
   ],
   "rls": {
     "read": {
