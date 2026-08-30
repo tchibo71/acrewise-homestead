@@ -45,6 +45,10 @@ const typeEmojis = {
   cider: "🍎",
   mead: "🍯",
   vinegar: "🧪",
+  beer: "🍺",
+  fermented_sausage: "🌭",
+  salami: "🥓",
+  cured_meat: "🥩",
   other: "🥫"
 };
 
@@ -219,6 +223,19 @@ export default function FermentationDetail() {
                 <p className="text-amber-800">{batch.primary_produce}</p>
               </div>
             )}
+
+            {batch.meat_type && (
+              <div className="mt-2 p-4 bg-red-50 rounded-lg">
+                <p className="text-sm font-semibold text-red-900 mb-1">Meat Type:</p>
+                <p className="text-red-800">{batch.meat_type}</p>
+              </div>
+            )}
+
+            {batch.is_smoked && (
+              <div className="mt-2 flex gap-2">
+                <Badge className="bg-orange-100 text-orange-700 border-orange-200">🔥 Smoked</Badge>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -263,28 +280,80 @@ export default function FermentationDetail() {
             </Card>
           )}
 
-          {(batch.container_type || batch.container_size || batch.brine_type) && (
+          {((batch.containers && batch.containers.length > 0) || batch.container_type || batch.container_size || batch.brine_type) && (
             <Card>
               <CardHeader>
-                <CardTitle>Container & Method</CardTitle>
+                <CardTitle>Containers & Method</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {batch.container_type && (
-                  <div>
-                    <p className="text-sm text-gray-600">Container Type:</p>
-                    <p className="font-medium">{batch.container_type}</p>
+                {batch.containers && batch.containers.length > 0 ? (
+                  <div className="space-y-2">
+                    {batch.containers.map((c, idx) => (
+                      <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span className="font-medium">{c.container_type} — {c.container_size}</span>
+                        <Badge className="bg-amber-100 text-amber-700">×{c.quantity}</Badge>
+                      </div>
+                    ))}
+                    <p className="text-sm font-semibold text-gray-700 pt-2 border-t border-gray-200">
+                      Total: {batch.containers.reduce((sum, c) => sum + c.quantity, 0)} container(s)
+                    </p>
                   </div>
-                )}
-                {batch.container_size && (
-                  <div>
-                    <p className="text-sm text-gray-600">Container Size:</p>
-                    <p className="font-medium">{batch.container_size}</p>
-                  </div>
+                ) : (
+                  <>
+                    {batch.container_type && (
+                      <div>
+                        <p className="text-sm text-gray-600">Container Type:</p>
+                        <p className="font-medium">{batch.container_type}</p>
+                      </div>
+                    )}
+                    {batch.container_size && (
+                      <div>
+                        <p className="text-sm text-gray-600">Container Size:</p>
+                        <p className="font-medium">{batch.container_size}</p>
+                      </div>
+                    )}
+                  </>
                 )}
                 {batch.brine_type && (
                   <div>
                     <p className="text-sm text-gray-600">Brine Method:</p>
                     <p className="font-medium capitalize">{batch.brine_type.replace(/_/g, ' ')}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {batch.is_smoked && (
+            <Card className="border-l-4 border-l-orange-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-orange-900">
+                  🔥 Smoking Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {batch.smoking_method && (
+                  <div>
+                    <p className="text-sm text-gray-600">Smoking Method:</p>
+                    <p className="font-medium capitalize">{batch.smoking_method.replace(/_/g, ' ')}</p>
+                  </div>
+                )}
+                {batch.wood_type && (
+                  <div>
+                    <p className="text-sm text-gray-600">Wood Type:</p>
+                    <p className="font-medium">{batch.wood_type}</p>
+                  </div>
+                )}
+                {batch.smoking_temperature && (
+                  <div>
+                    <p className="text-sm text-gray-600">Smoking Temperature:</p>
+                    <p className="font-medium">{batch.smoking_temperature}°F</p>
+                  </div>
+                )}
+                {batch.smoking_duration_hours && (
+                  <div>
+                    <p className="text-sm text-gray-600">Smoking Duration:</p>
+                    <p className="font-medium">{batch.smoking_duration_hours} hours</p>
                   </div>
                 )}
               </CardContent>

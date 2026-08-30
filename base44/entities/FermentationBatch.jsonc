@@ -24,6 +24,10 @@
         "cider",
         "mead",
         "vinegar",
+        "beer",
+        "fermented_sausage",
+        "salami",
+        "cured_meat",
         "other"
       ],
       "description": "Type of fermentation"
@@ -31,6 +35,10 @@
     "primary_produce": {
       "type": "string",
       "description": "Main vegetable, fruit, or ingredient being fermented"
+    },
+    "meat_type": {
+      "type": "string",
+      "description": "Type of meat for fermented meat products (e.g., Pork, Beef, Venison)"
     },
     "ingredients": {
       "type": "array",
@@ -126,17 +134,65 @@
       "type": "number",
       "description": "Total days fermented"
     },
+    "containers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "container_type": {
+            "type": "string",
+            "description": "Type of container (e.g., Mason jar, Crock)"
+          },
+          "container_size": {
+            "type": "string",
+            "description": "Size of container (e.g., Half gallon, Quart)"
+          },
+          "quantity": {
+            "type": "number",
+            "default": 1,
+            "description": "How many containers of this type and size"
+          }
+        }
+      },
+      "description": "List of containers used with quantities for tracking production volume"
+    },
     "container_type": {
       "type": "string",
-      "description": "Jar, crock, bucket, etc."
+      "description": "Container type (legacy field - use containers array for multiple sizes)"
     },
     "container_size": {
       "type": "string",
-      "description": "Size of container used"
+      "description": "Container size (legacy field - use containers array for multiple sizes)"
     },
     "fermentation_temperature": {
       "type": "number",
       "description": "Average temperature in Fahrenheit"
+    },
+    "is_smoked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this product was smoked (for fermented meats)"
+    },
+    "smoking_method": {
+      "type": "string",
+      "enum": [
+        "cold_smoke",
+        "hot_smoke",
+        "liquid_smoke"
+      ],
+      "description": "Smoking method used"
+    },
+    "smoking_temperature": {
+      "type": "number",
+      "description": "Smoking temperature in Fahrenheit"
+    },
+    "smoking_duration_hours": {
+      "type": "number",
+      "description": "Total smoking duration in hours"
+    },
+    "wood_type": {
+      "type": "string",
+      "description": "Type of wood used for smoking (e.g., Hickory, Apple, Cherry)"
     },
     "status": {
       "type": "string",

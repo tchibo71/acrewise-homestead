@@ -48,18 +48,26 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
     success_rating: null,
     would_repeat: null,
     recipe_notes: "",
-    general_notes: ""
+    general_notes: "",
+    containers: [],
+    is_smoked: false,
+    smoking_method: "none",
+    smoking_temperature: null,
+    smoking_duration_hours: null,
+    wood_type: "",
+    meat_type: ""
   });
 
   const [newIngredient, setNewIngredient] = useState({ ingredient_name: "", weight: "", weight_unit: "lbs" });
+  const [newContainer, setNewContainer] = useState({ container_type: "", container_size: "", quantity: 1 });
   const [problemInput, setProblemInput] = useState("");
   const [solutionInput, setSolutionInput] = useState("");
 
   useEffect(() => {
     if (batch) {
-      setFormData(batch);
+      setFormData({ ...batch, containers: batch.containers || [] });
     } else if (draft) {
-      setFormData(draft.formData);
+      setFormData({ ...draft.formData, containers: draft.formData.containers || [] });
     }
   }, [batch, draft]);
 
@@ -151,6 +159,25 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
     setFormData({
       ...formData,
       ingredients: formData.ingredients.filter((_, i) => i !== index)
+    });
+  };
+
+  const isMeatFerment = (type) => ["fermented_sausage", "salami", "cured_meat"].includes(type);
+
+  const addContainer = () => {
+    if (newContainer.container_type && newContainer.container_size) {
+      setFormData({
+        ...formData,
+        containers: [...formData.containers, { ...newContainer, quantity: parseInt(newContainer.quantity) || 1 }]
+      });
+      setNewContainer({ container_type: "", container_size: "", quantity: 1 });
+    }
+  };
+
+  const removeContainer = (index) => {
+    setFormData({
+      ...formData,
+      containers: formData.containers.filter((_, i) => i !== index)
     });
   };
 
@@ -247,6 +274,10 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       <SelectItem value="cider">Cider</SelectItem>
                       <SelectItem value="mead">Mead</SelectItem>
                       <SelectItem value="vinegar">Vinegar</SelectItem>
+                      <SelectItem value="beer">Beer</SelectItem>
+                      <SelectItem value="fermented_sausage">Fermented Sausage</SelectItem>
+                      <SelectItem value="salami">Salami</SelectItem>
+                      <SelectItem value="cured_meat">Cured Meat</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -289,6 +320,17 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                   </Select>
                 </div>
               </div>
+
+              {isMeatFerment(formData.fermentation_type) && (
+                <div>
+                  <Label>Meat Type</Label>
+                  <Input
+                    value={formData.meat_type}
+                    onChange={(e) => setFormData({...formData, meat_type: e.target.value})}
+                    placeholder="e.g., Pork, Beef, Venison"
+                  />
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="ingredients" className="space-y-4">
@@ -423,7 +465,11 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       type="number"
                       step="0.1"
                       value={formData.sugar_percentage}
-                      onChange={(e) => setFormData({...formData, sugar_percentage: parseFloat(e.target.value)})}
+                      onChange={(e) => {
+                      const pct = parseFloat(e.target.value) || 0;
+                      const weight = formData.total_weight > 0 ? (formData.total_weight * pct) / 100 : 0;
+                      setFormData({...formData, sugar_percentage: pct, sugar_weight: parseFloat(weight.toFixed(2))});
+                    }}
                       placeholder="e.g., 15"
                     />
                   </div>
@@ -433,7 +479,11 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
                       type="number"
                       step="0.01"
                       value={formData.sugar_weight}
-                      onChange={(e) => setFormData({...formData, sugar_weight: parseFloat(e.target.value)})}
+                      onChange={(e) => {
+                        const weight = parseFloat(e.target.value) || 0;
+                        const pct = formData.total_weight > 0 ? (weight / formData.total_weight) * 100 : 0;
+                        setFormData({...formData, sugar_weight: weight, sugar_percentage: parseFloat(pct.toFixed(2))});
+                      }}
                       placeholder="auto-calculated"
                     />
                   </div>
@@ -442,25 +492,109 @@ export default function AddFermentationModal({ batch, draft, onClose }) {
             </TabsContent>
 
             <TabsContent value="process" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Container Type</Label>
+              <div>
+                <Label>Containers (track how many of each size)</Label>
+                <div className="flex gap-2 mb-2">
                   <Input
-                    value={formData.container_type}
-                    onChange={(e) => setFormData({...formData, container_type: e.target.value})}
-                    placeholder="e.g., Mason jar, Crock"
+                    placeholder="Type (e.g., Mason jar)"
+                    value={newContainer.container_type}
+                    onChange={(e) => setNewContainer({...newContainer, container_type: e.target.value})}
+                    className="flex-1"
                   />
-                </div>
-
-                <div>
-                  <Label>Container Size</Label>
                   <Input
-                    value={formData.container_size}
-                    onChange={(e) => setFormData({...formData, container_size: e.target.value})}
-                    placeholder="e.g., 1 gallon, 2 quarts"
+                    placeholder="Size (e.g., Half gallon)"
+                    value={newContainer.container_size}
+                    onChange={(e) => setNewContainer({...newContainer, container_size: e.target.value})}
+                    className="flex-1"
                   />
+                  <Input
+                    type="number"
+                    min="1"
+                    placeholder="Qty"
+                    value={newContainer.quantity}
+                    onChange={(e) => setNewContainer({...newContainer, quantity: e.target.value})}
+                    className="w-20"
+                  />
+                  <Button type="button" onClick={addContainer}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
                 </div>
+                {formData.containers.length > 0 && (
+                  <div className="space-y-2">
+                    {formData.containers.map((c, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                        <span className="font-medium text-sm">{c.container_type} — {c.container_size}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-gray-600 text-sm">×{c.quantity}</span>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => removeContainer(idx)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    <p className="text-sm font-semibold text-gray-700">
+                      Total: {formData.containers.reduce((sum, c) => sum + c.quantity, 0)} container(s)
+                    </p>
+                  </div>
+                )}
               </div>
+
+              {isMeatFerment(formData.fermentation_type) && (
+                <div className="bg-orange-50 p-4 rounded-lg space-y-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="is_smoked"
+                      checked={formData.is_smoked}
+                      onChange={(e) => setFormData({...formData, is_smoked: e.target.checked})}
+                      className="w-4 h-4"
+                    />
+                    <Label htmlFor="is_smoked" className="cursor-pointer">Smoked Product</Label>
+                  </div>
+                  {formData.is_smoked && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Smoking Method</Label>
+                        <Select value={formData.smoking_method} onValueChange={(value) => setFormData({...formData, smoking_method: value})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="cold_smoke">Cold Smoke</SelectItem>
+                            <SelectItem value="hot_smoke">Hot Smoke</SelectItem>
+                            <SelectItem value="liquid_smoke">Liquid Smoke</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Wood Type</Label>
+                        <Input
+                          value={formData.wood_type}
+                          onChange={(e) => setFormData({...formData, wood_type: e.target.value})}
+                          placeholder="e.g., Hickory, Apple, Cherry"
+                        />
+                      </div>
+                      <div>
+                        <Label>Smoking Temp (°F)</Label>
+                        <Input
+                          type="number"
+                          value={formData.smoking_temperature || ""}
+                          onChange={(e) => setFormData({...formData, smoking_temperature: parseFloat(e.target.value) || null})}
+                          placeholder="e.g., 200"
+                        />
+                      </div>
+                      <div>
+                        <Label>Smoking Duration (hours)</Label>
+                        <Input
+                          type="number"
+                          step="0.5"
+                          value={formData.smoking_duration_hours || ""}
+                          onChange={(e) => setFormData({...formData, smoking_duration_hours: parseFloat(e.target.value) || null})}
+                          placeholder="e.g., 8"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

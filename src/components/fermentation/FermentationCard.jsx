@@ -35,6 +35,10 @@ const typeEmojis = {
   cider: "🍎",
   mead: "🍯",
   vinegar: "🧪",
+  beer: "🍺",
+  fermented_sausage: "🌭",
+  salami: "🥓",
+  cured_meat: "🥩",
   other: "🥫"
 };
 
@@ -110,6 +114,18 @@ export default function FermentationCard({ batch, onEdit }) {
           <p className="text-sm text-gray-600">
             <span className="font-semibold">Main ingredient:</span> {batch.primary_produce}
           </p>
+        )}
+
+        {batch.containers && batch.containers.length > 0 && (
+          <p className="text-sm text-gray-600">
+            <span className="font-semibold">Containers:</span> {batch.containers.reduce((sum, c) => sum + c.quantity, 0)} total
+          </p>
+        )}
+
+        {batch.is_smoked && (
+          <Badge variant="outline" className="text-orange-600 border-orange-300">
+            🔥 Smoked
+          </Badge>
         )}
 
         {batch.problems_encountered && batch.problems_encountered.length > 0 && (
