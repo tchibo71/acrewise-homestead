@@ -139,7 +139,6 @@ const operationsItems = [
     title: "Fermentation",
     url: createPageUrl("FermentationTracking"),
     icon: Beaker,
-    proOnly: true,
   },
   {
     title: "Inventory",

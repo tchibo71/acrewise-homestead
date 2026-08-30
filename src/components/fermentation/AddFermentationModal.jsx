@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { saveDraft, isOnline } from "@/components/utils/offlineStorage";
+import { saveDraft, isOnline, deleteDraft } from "@/components/utils/offlineStorage";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, X, Save, WifiOff } from "lucide-react";
 
-export default function AddFermentationModal({ batch, onClose }) {
+export default function AddFermentationModal({ batch, draft, onClose }) {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("basic");
   
@@ -55,8 +55,10 @@ export default function AddFermentationModal({ batch, onClose }) {
   useEffect(() => {
     if (batch) {
       setFormData(batch);
+    } else if (draft) {
+      setFormData(draft.formData);
     }
-  }, [batch]);
+  }, [batch, draft]);
 
   // Calculate total weight from ingredients
   useEffect(() => {
@@ -80,14 +82,18 @@ export default function AddFermentationModal({ batch, onClose }) {
   }, [formData.total_weight, formData.salt_percentage]);
 
   const mutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       if (batch) {
         return base44.entities.FermentationBatch.update(batch.id, data);
       }
       return base44.entities.FermentationBatch.create(data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['fermentation-batches'] });
+      if (draft) {
+        await deleteDraft(draft.id);
+        queryClient.invalidateQueries({ queryKey: ['fermentation-drafts', currentUser?.email] });
+      }
       onClose();
     },
   });
