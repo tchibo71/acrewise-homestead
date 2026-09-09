@@ -43,19 +43,26 @@ function SiteDataField({ label, value, icon: Icon, status }) {
   const statusConfig = {
     success: { color: "text-green-700 bg-green-50 border-green-200", icon: CheckCircle2, iconColor: "text-green-600" },
     failed: { color: "text-red-700 bg-red-50 border-red-200", icon: XCircle, iconColor: "text-red-600" },
+    unavailable: { color: "text-amber-700 bg-amber-50 border-amber-200", icon: AlertTriangle, iconColor: "text-amber-500" },
     pending: { color: "text-gray-500 bg-gray-50 border-gray-200", icon: AlertTriangle, iconColor: "text-gray-400" },
   };
   const cfg = statusConfig[status] || statusConfig.pending;
   const StatusIcon = cfg.icon;
+
+  const displayValue = status === "success"
+    ? (value ?? "N/A")
+    : status === "failed"
+    ? "Fetch failed"
+    : status === "unavailable"
+    ? "Service unavailable"
+    : "Not yet fetched";
 
   return (
     <div className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 ${cfg.color}`}>
       <div className="flex items-center gap-2 min-w-0 flex-1">
         <Icon className="w-4 h-4 shrink-0" />
         <span className="text-sm font-medium shrink-0">{label}:</span>
-        <span className="text-sm truncate">
-          {status === "success" ? (value ?? "N/A") : status === "failed" ? "Fetch failed" : "Not yet fetched"}
-        </span>
+        <span className="text-sm truncate">{displayValue}</span>
       </div>
       <StatusIcon className={`w-4 h-4 shrink-0 ${cfg.iconColor}`} />
     </div>
@@ -108,15 +115,15 @@ export default function SiteDataCard({ profile, propertyMap, onSave }) {
         zipCode = await reverseGeocodeZip(lat, lon);
       }
 
-      const results = await fetchAllSiteData(lat, lon, zipCode);
+      const results = await fetchAllSiteData(lat, lon, zipCode, profile?.location_address);
 
-      // Build status map for UI
+      // Build status map for UI — "unavailable" for sources that are down (FWS wetlands)
       const statuses = {
         soil_series: results.soil_series ? "success" : "failed",
         flood_zone: results.flood_zone ? "success" : "failed",
         elevation_ft: results.elevation ? "success" : "failed",
         hardiness_zone: results.hardiness_zone ? "success" : "failed",
-        wetlands_present: results.wetlands ? "success" : "failed",
+        wetlands_present: results.wetlands ? "success" : "unavailable",
       };
 
       setFetchResults({ statuses, zipCodeUsed: zipCode });
@@ -129,6 +136,7 @@ export default function SiteDataCard({ profile, propertyMap, onSave }) {
         elevation_ft: results.elevation?.elevation_ft ?? null,
         hardiness_zone: results.hardiness_zone?.hardiness_zone ?? null,
         wetlands_present: results.wetlands?.wetlands_present ?? null,
+        total_acreage: results.acreage?.total_acreage ?? null,
         site_data_fetched_date: new Date().toISOString().split("T")[0],
       };
 

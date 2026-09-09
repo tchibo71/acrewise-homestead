@@ -153,6 +153,7 @@ export default function FarmProfile() {
         elevation_ft: data.elevation?.elevation_ft ?? formData.elevation_ft,
         hardiness_zone: data.hardiness_zone?.hardiness_zone ?? formData.hardiness_zone,
         wetlands_present: data.wetlands?.wetlands_present ?? formData.wetlands_present,
+        total_acreage: data.acreage?.total_acreage ?? formData.total_acreage,
         site_data_fetched_date: new Date().toISOString().split("T")[0],
         ai_recommendations: aiRecommendations,
         last_updated: new Date().toISOString().split("T")[0],
@@ -233,6 +234,8 @@ Format as clear, numbered sections with specific actionable advice.`;
   };
 
   const handleSaveSiteData = async (siteData) => {
+    // Update form state immediately so fields populate without waiting for refetch
+    setFormData(prev => ({ ...prev, ...siteData }));
     await saveMutation.mutateAsync({
       ...formData,
       ...siteData,

@@ -168,6 +168,29 @@ async function fetchWetlands(lat, lon) {
   return null;
 }
 
+async function fetchAcreage(base44, address, lat, lon) {
+  if (!address) return null;
+  try {
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `Search for the parcel or property acreage for this address: "${address}". Look for county assessor, property records, GIS parcel data, or real estate listing data. Return ONLY the total acreage as a number. If you cannot find reliable data, return acreage as 0. Do not guess or estimate.`,
+      add_context_from_internet: true,
+      model: "gemini_3_flash",
+      response_json_schema: {
+        type: "object",
+        properties: {
+          acreage: { type: "number" }
+        }
+      }
+    });
+    if (result && typeof result.acreage === "number" && result.acreage > 0) {
+      return { total_acreage: result.acreage };
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function nominatimSearch(query) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=1&addressdetails=1`;
   const res = await fetchWithTimeout(url, null, 10000);
@@ -249,12 +272,13 @@ export default async function (req) {
       return Response.json({ error: "Provide either an address, or lat and lon." }, { status: 400 });
     }
 
-    const [soil, flood, elevation, hardiness, wetlands] = await Promise.all([
+    const [soil, flood, elevation, hardiness, wetlands, acreage] = await Promise.all([
       fetchSoilSeries(lat, lon),
       fetchFloodZone(lat, lon),
       fetchElevation(lat, lon),
       fetchHardinessZone(zipCode),
       fetchWetlands(lat, lon),
+      fetchAcreage(base44, address || formattedAddress, lat, lon),
     ]);
 
     return Response.json({
@@ -266,6 +290,7 @@ export default async function (req) {
       elevation,
       hardiness_zone: hardiness,
       wetlands,
+      acreage,
       fetch_timestamp: new Date().toISOString(),
     });
   } catch (error) {
