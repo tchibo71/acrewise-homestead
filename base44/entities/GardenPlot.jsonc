@@ -33,6 +33,23 @@
     "soil_type": {
       "type": "string"
     },
+    "hardiness_zone": {
+      "type": "string",
+      "description": "USDA plant hardiness zone (e.g., 7a) from site data lookup"
+    },
+    "flood_zone": {
+      "type": "string",
+      "description": "FEMA flood zone designation at plot center point"
+    },
+    "wetlands_present": {
+      "type": "boolean",
+      "description": "Whether FWS National Wetlands Inventory data indicates wetlands at the plot"
+    },
+    "site_data_fetched_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when site data (soil, flood, hardiness, wetlands) was last fetched"
+    },
     "sun_exposure": {
       "type": "string",
       "enum": [

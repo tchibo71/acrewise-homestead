@@ -11,7 +11,9 @@ import {
   Download,
   X,
   Target,
-  Save
+  Save,
+  Loader2,
+  Mountain
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import { fetchCurrentWeather } from "@/components/utils/weatherUtils";
 import { calculatePolygonCenter, calculateAreaInAcres } from "@/components/utils/mapboxConfig";
+import { fetchAllSiteData } from "@/components/utils/siteDataUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
 
 // Import refactored components
@@ -177,6 +180,8 @@ export default function PropertyMap() {
   const [drawingFeatureType, setDrawingFeatureType] = useState(null);
   const [showFeatureModal, setShowFeatureModal] = useState(false);
   const [featureFormData, setFeatureFormData] = useState({});
+  const [fetchingSiteData, setFetchingSiteData] = useState(false);
+  const [siteDataError, setSiteDataError] = useState(null);
   
   // Layer visibility
   const [showBoundary, setShowBoundary] = useState(true);
@@ -435,6 +440,58 @@ export default function PropertyMap() {
     setRotation(0);
     setShowFeatureModal(false);
     setFeatureFormData({});
+    setSiteDataError(null);
+  };
+
+  // Fetch site data (soil, flood zone, hardiness, wetlands) for a garden plot
+  const handleFetchGardenSiteData = async () => {
+    const coords = featureFormData.coordinates;
+    if (!coords || coords.length < 3) return;
+
+    const center = calculatePolygonCenter(coords);
+    const lat = center.latitude;
+    const lng = center.longitude;
+
+    setFetchingSiteData(true);
+    setSiteDataError(null);
+
+    try {
+      const result = await fetchAllSiteData(lat, lng);
+
+      const updates = {};
+
+      // Soil type - confirm overwrite if user already entered a value
+      if (result.soil_series?.soil_series) {
+        const fetchedSoil = result.soil_series.soil_series;
+        const existing = featureFormData.soil_type;
+        if (existing && existing.trim()) {
+          if (window.confirm(`Fetched soil type: "${fetchedSoil}". Overwrite existing soil type "${existing}"?`)) {
+            updates.soil_type = fetchedSoil;
+          }
+        } else {
+          updates.soil_type = fetchedSoil;
+        }
+      }
+
+      // Hardiness zone, flood zone, wetlands - populate directly
+      if (result.hardiness_zone?.hardiness_zone) {
+        updates.hardiness_zone = result.hardiness_zone.hardiness_zone;
+      }
+      if (result.flood_zone?.flood_zone) {
+        updates.flood_zone = result.flood_zone.flood_zone;
+      }
+      if (result.wetlands) {
+        updates.wetlands_present = result.wetlands.wetlands_present;
+      }
+
+      updates.site_data_fetched_date = new Date().toISOString().split('T')[0];
+
+      setFeatureFormData(prev => ({ ...prev, ...updates }));
+    } catch (error) {
+      setSiteDataError('Failed to fetch site data. Please try again.');
+    } finally {
+      setFetchingSiteData(false);
+    }
   };
 
   // AI handlers
@@ -917,6 +974,92 @@ Format as numbered list with detailed explanations for each.`;
                         </SelectContent>
                       </Select>
                     </div>
+                    {/* Auto-calculated GPS coordinates from polygon */}
+                    {featureFormData.coordinates && featureFormData.coordinates.length >= 3 && (() => {
+                      const center = calculatePolygonCenter(featureFormData.coordinates);
+                      return (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Latitude</Label>
+                            <Input value={center.latitude.toFixed(6)} readOnly className="bg-gray-50" />
+                          </div>
+                          <div>
+                            <Label>Longitude</Label>
+                            <Input value={center.longitude.toFixed(6)} readOnly className="bg-gray-50" />
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {/* Soil type (reused for fetched soil series) */}
+                    <div>
+                      <Label htmlFor="soil_type">Soil Type</Label>
+                      <Input
+                        id="soil_type"
+                        value={featureFormData.soil_type || ''}
+                        onChange={(e) => setFeatureFormData({...featureFormData, soil_type: e.target.value})}
+                        placeholder="e.g., Clay loam, Sandy loam"
+                      />
+                    </div>
+                    {/* Fetch Site Data button */}
+                    {(() => {
+                      const hasCoords = featureFormData.coordinates && featureFormData.coordinates.length >= 3;
+                      return (
+                        <div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={!hasCoords || fetchingSiteData}
+                            onClick={handleFetchGardenSiteData}
+                            title={!hasCoords ? "Draw the plot on the map first to set latitude and longitude" : ""}
+                            className="w-full"
+                          >
+                            {fetchingSiteData ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Fetching Site Data...
+                              </>
+                            ) : (
+                              <>
+                                <Mountain className="w-4 h-4 mr-2" />
+                                Fetch Site Data for This Plot
+                              </>
+                            )}
+                          </Button>
+                          {siteDataError && (
+                            <p className="text-sm text-red-600 mt-1">{siteDataError}</p>
+                          )}
+                          {featureFormData.site_data_fetched_date && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Site data last fetched: {new Date(featureFormData.site_data_fetched_date).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    {/* Display fetched site data */}
+                    {(featureFormData.hardiness_zone || featureFormData.flood_zone || featureFormData.wetlands_present !== undefined) && (
+                      <div className="bg-cyan-50 border border-cyan-200 rounded-lg p-3 space-y-2">
+                        <p className="text-sm font-semibold text-cyan-900">Fetched Site Data</p>
+                        {featureFormData.hardiness_zone && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Hardiness Zone:</span>
+                            <span className="font-medium text-cyan-800">{featureFormData.hardiness_zone}</span>
+                          </div>
+                        )}
+                        {featureFormData.flood_zone && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Flood Zone:</span>
+                            <span className="font-medium text-cyan-800">{featureFormData.flood_zone}</span>
+                          </div>
+                        )}
+                        {featureFormData.wetlands_present !== undefined && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Wetlands Present:</span>
+                            <span className="font-medium text-cyan-800">{featureFormData.wetlands_present ? 'Yes' : 'No'}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
 
