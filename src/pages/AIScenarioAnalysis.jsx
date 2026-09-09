@@ -68,6 +68,7 @@ export default function AIScenarioAnalysis() {
   const [scenario, setScenario] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [pendingAnalysis, setPendingAnalysis] = useState(null);
@@ -144,18 +145,24 @@ export default function AIScenarioAnalysis() {
     if (files.length === 0) return;
 
     setUploading(true);
+    setUploadError(null);
     try {
-      const uploadPromises = files.map(file => 
-        base44.integrations.Core.UploadFile({ file })
+      const uploadPromises = files.map(file =>
+        base44.integrations.Core.UploadFile({ file }).then(res => ({
+          url: res.file_url,
+          name: file.name,
+          type: file.type,
+          isImage: file.type.startsWith("image/"),
+        }))
       );
       const results = await Promise.all(uploadPromises);
-      const fileUrls = results.map(r => r.file_url);
-      setUploadedFiles(prev => [...prev, ...fileUrls]);
+      setUploadedFiles(prev => [...prev, ...results]);
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload files");
+      setUploadError(error?.message || "Failed to upload files");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -293,7 +300,7 @@ This analysis is for informational purposes only and does not constitute legal a
         const analysisData = {
           title,
           scenario_description: scenario,
-          uploaded_files: uploadedFiles,
+          uploaded_files: uploadedFiles.map(f => f.url),
           ai_analysis: warningResponse,
           contains_criminal_warning: true,
           user_overrode_warning: true,
@@ -440,7 +447,7 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
       const analysisData = {
         title,
         scenario_description: scenario,
-        uploaded_files: uploadedFiles,
+        uploaded_files: uploadedFiles.map(f => f.url),
         ai_analysis: finalAdvice,
         contains_criminal_warning: false,
         user_overrode_warning: false,
@@ -735,11 +742,22 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
                     </label>
                   </div>
 
+                  {uploadError && (
+                    <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                      Upload failed: {uploadError}
+                    </div>
+                  )}
+
                   {uploadedFiles.length > 0 && (
                     <div className="mt-3 space-y-2">
-                      {uploadedFiles.map((fileUrl, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                          <span className="text-sm text-gray-700">File {idx + 1}</span>
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center gap-3 bg-gray-50 p-2 rounded">
+                          {file.isImage ? (
+                            <img src={file.url} alt={file.name} className="w-10 h-10 object-cover rounded" />
+                          ) : (
+                            <FileText className="w-10 h-10 text-gray-400 p-1.5" />
+                          )}
+                          <span className="text-sm text-gray-700 flex-1 truncate">{file.name}</span>
                           <Button
                             variant="ghost"
                             size="sm"
