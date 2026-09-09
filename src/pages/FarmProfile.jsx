@@ -170,7 +170,8 @@ export default function FarmProfile() {
       // Save everything to the profile so it persists and displays immediately
       await saveMutation.mutateAsync(fullUpdate);
     } catch (error) {
-      alert(error.message || "Failed to geocode address");
+      const msg = error?.response?.data?.error || error?.data?.error || error.message || "Failed to geocode address";
+      alert(msg);
     } finally {
       setGeocoding(false);
     }

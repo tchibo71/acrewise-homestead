@@ -168,14 +168,41 @@ async function fetchWetlands(lat, lon) {
   return null;
 }
 
+async function nominatimSearch(query) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=us&limit=1&addressdetails=1`;
+  const res = await fetchWithTimeout(url, null, 10000);
+  if (!res.ok || !res.data) return null;
+  const data = JSON.parse(res.data);
+  if (!data || data.length === 0) return null;
+  return data[0];
+}
+
 async function geocodeAddress(address) {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=us&limit=1&addressdetails=1`;
-    const res = await fetchWithTimeout(url, null, 10000);
-    if (!res.ok || !res.data) return null;
-    const data = JSON.parse(res.data);
-    if (!data || data.length === 0) return null;
-    const result = data[0];
+    // Nominatim can be picky about address format — try progressively simpler variants
+    const cleaned = address.replace(/,\s*United States\s*$/i, "").replace(/,\s*USA\s*$/i, "");
+    // Extract zip code and street number+name for fallback queries
+    const zipMatch = address.match(/\b(\d{5})(?:-\d{4})?\b/);
+    const zip = zipMatch ? zipMatch[1] : "";
+    const streetMatch = address.match(/^(\d+\s+[A-Za-z0-9\s]+?(?:Road|Rd|Street|St|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd|Way|Court|Ct|Circle|Cir|Place|Pl|Highway|Hwy|Trail|Trl| Parkway|Pkwy)\b)/i);
+    const street = streetMatch ? streetMatch[1].trim() : "";
+    const variants = [
+      cleaned,
+      street && zip ? `${street}, ${zip}` : null,
+      street ? street : null,
+      zip ? zip : null,
+    ].filter(Boolean);
+
+    let result = null;
+    for (const variant of variants) {
+      if (!variant || variant.trim().length < 5) continue;
+      result = await nominatimSearch(variant);
+      if (result) break;
+      await new Promise(r => setTimeout(r, 1100)); // respect Nominatim 1 req/sec limit
+    }
+
+    if (!result) return null;
+
     const lat = parseFloat(result.lat);
     const lon = parseFloat(result.lon);
     if (isNaN(lat) || isNaN(lon)) return null;
