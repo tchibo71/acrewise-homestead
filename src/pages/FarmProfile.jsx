@@ -20,8 +20,7 @@ import {
   ListChecks
 } from "lucide-react";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
-import { geocodeAddress } from "@/components/utils/mapboxConfig";
-import { fetchAllSiteData } from "@/components/utils/siteDataUtils";
+
 import PaywallModal from "../components/paywall/PaywallModal";
 import PhotoAnalysisUploader from "@/components/farm-profile/PhotoAnalysisUploader";
 import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
@@ -128,76 +127,48 @@ export default function FarmProfile() {
 
     setGeocoding(true);
     try {
-      const result = await geocodeAddress(formData.location_address);
-      const lat = result.latitude;
-      const lng = result.longitude;
-      const formattedAddress = result.formatted_address;
+      // ONE backend call: geocodes the address AND fetches all site data
+      const response = await base44.functions.invoke("fetchSiteData", {
+        address: formData.location_address,
+      });
+      const data = response?.data ?? response;
 
-      setFormData(prev => ({
-        ...prev,
-        grid_coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-        location_address: formattedAddress
-      }));
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
 
-      // Also update user's property location for weather
+      const lat = data.coordinates.lat;
+      const lon = data.coordinates.lon;
+      const formattedAddress = data.formatted_address || formData.location_address;
+
+      // Build the full update: coordinates + all site data in one shot
+      const fullUpdate = {
+        ...formData,
+        grid_coordinates: `${lat.toFixed(6)}, ${lon.toFixed(6)}`,
+        location_address: formattedAddress,
+        soil_series: data.soil_series?.soil_series ?? formData.soil_series,
+        flood_zone: data.flood_zone?.flood_zone ?? formData.flood_zone,
+        is_in_floodplain: data.flood_zone?.is_in_floodplain ?? formData.is_in_floodplain,
+        elevation_ft: data.elevation?.elevation_ft ?? formData.elevation_ft,
+        hardiness_zone: data.hardiness_zone?.hardiness_zone ?? formData.hardiness_zone,
+        wetlands_present: data.wetlands?.wetlands_present ?? formData.wetlands_present,
+        site_data_fetched_date: new Date().toISOString().split("T")[0],
+        ai_recommendations: aiRecommendations,
+        last_updated: new Date().toISOString().split("T")[0],
+      };
+
+      setFormData(fullUpdate);
+
+      // Update user's property location for weather
       await base44.auth.updateMe({
         property_latitude: lat,
-        property_longitude: lng
+        property_longitude: lon,
       });
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
 
-      queryClient.invalidateQueries({ queryKey: ['current-user'] });
-
-      // Auto-fetch site data (soil, flood zone, elevation, hardiness, wetlands) in background
-      const zipMatch = formattedAddress.match(/\b(\d{5})(?:-\d{4})?\b/);
-      const zipCode = zipMatch ? zipMatch[1] : null;
-
-      fetchAllSiteData(lat, lng, zipCode).then(async siteData => {
-        const siteUpdate = {
-          soil_series: siteData.soil_series?.soil_series ?? formData.soil_series,
-          flood_zone: siteData.flood_zone?.flood_zone ?? formData.flood_zone,
-          is_in_floodplain: siteData.flood_zone?.is_in_floodplain ?? formData.is_in_floodplain,
-          elevation_ft: siteData.elevation?.elevation_ft ?? formData.elevation_ft,
-          hardiness_zone: siteData.hardiness_zone?.hardiness_zone ?? formData.hardiness_zone,
-          wetlands_present: siteData.wetlands?.wetlands_present ?? formData.wetlands_present,
-          site_data_fetched_date: new Date().toISOString().split('T')[0]
-        };
-
-        setFormData(prev => ({ ...prev, ...siteUpdate }));
-
-        // Auto-save site data to the profile so it persists and displays immediately
-        try {
-          await saveMutation.mutateAsync({
-            ...formData,
-            ...siteUpdate,
-            grid_coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-            location_address: formattedAddress,
-            ai_recommendations: aiRecommendations,
-            last_updated: new Date().toISOString().split('T')[0]
-          });
-        } catch (e) {
-          console.log("Could not auto-save site data:", e);
-        }
-      }).catch(error => {
-        console.log("Could not auto-fetch site data:", error);
-      });
-
-      // Fire acreage lookup in background (non-blocking)
-      const acreagePrompt = `Find the property size in acres for this address: ${formattedAddress}. 
-        Search public records, property listings, and county assessor data.
-        Return ONLY the number of acres as a decimal number, nothing else. If you cannot find it, return "unknown".`;
-
-      base44.integrations.Core.InvokeLLM({
-        prompt: acreagePrompt,
-        add_context_from_internet: true
-      }).then(acreageResult => {
-        const acres = parseFloat(acreageResult);
-        if (!isNaN(acres) && acres > 0) {
-          setFormData(prev => ({ ...prev, total_acreage: acres }));
-        }
-      }).catch(error => {
-        console.log("Could not auto-fetch acreage:", error);
-      });
-
+      // Save everything to the profile so it persists and displays immediately
+      await saveMutation.mutateAsync(fullUpdate);
     } catch (error) {
       alert(error.message || "Failed to geocode address");
     } finally {

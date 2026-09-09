@@ -168,6 +168,34 @@ async function fetchWetlands(lat, lon) {
   return null;
 }
 
+async function geocodeAddress(address) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=us&limit=1&addressdetails=1`;
+    const res = await fetchWithTimeout(url, null, 10000);
+    if (!res.ok || !res.data) return null;
+    const data = JSON.parse(res.data);
+    if (!data || data.length === 0) return null;
+    const result = data[0];
+    const lat = parseFloat(result.lat);
+    const lon = parseFloat(result.lon);
+    if (isNaN(lat) || isNaN(lon)) return null;
+
+    let zipCode = null;
+    if (result.address?.postcode) {
+      zipCode = result.address.postcode.split("-")[0].trim();
+    }
+
+    return {
+      latitude: lat,
+      longitude: lon,
+      formatted_address: result.display_name,
+      zipCode,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -175,10 +203,23 @@ export default async function (req) {
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { lat, lon, zipCode } = body;
+    let { lat, lon, zipCode, address } = body;
+
+    // If address is provided (no coords), geocode it first
+    let formattedAddress = null;
+    if (address && (lat == null || lon == null)) {
+      const geocoded = await geocodeAddress(address);
+      if (!geocoded) {
+        return Response.json({ error: "Could not find that address. Please check it and try again." }, { status: 400 });
+      }
+      lat = geocoded.latitude;
+      lon = geocoded.longitude;
+      zipCode = zipCode || geocoded.zipCode;
+      formattedAddress = geocoded.formatted_address;
+    }
 
     if (lat == null || lon == null) {
-      return Response.json({ error: "lat and lon are required" }, { status: 400 });
+      return Response.json({ error: "Provide either an address, or lat and lon." }, { status: 400 });
     }
 
     const [soil, flood, elevation, hardiness, wetlands] = await Promise.all([
@@ -190,6 +231,9 @@ export default async function (req) {
     ]);
 
     return Response.json({
+      coordinates: { lat, lon },
+      formatted_address: formattedAddress,
+      zipCode,
       soil_series: soil,
       flood_zone: flood,
       elevation,
