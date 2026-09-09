@@ -259,28 +259,17 @@ export async function fetchWetlands(lat, lon) {
 }
 
 /**
- * Fetch all site data in parallel. Returns a single merged object with
- * null for any individual fetch that failed, plus a fetch_timestamp.
+ * Fetch all site data via the backend function (fetchSiteData) to avoid
+ * browser CORS restrictions and government-API 403 blocks.
+ * Returns a single merged object with null for any individual fetch that
+ * failed, plus a fetch_timestamp.
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @param {string} zipCode - US ZIP code (for hardiness zone lookup)
  * @returns {Promise<object>}
  */
 export async function fetchAllSiteData(lat, lon, zipCode) {
-  const [soil, flood, elevation, hardiness, wetlands] = await Promise.allSettled([
-    fetchSoilSeries(lat, lon),
-    fetchFloodZone(lat, lon),
-    fetchElevation(lat, lon),
-    fetchHardinessZone(zipCode),
-    fetchWetlands(lat, lon),
-  ]);
-
-  return {
-    soil_series: soil.status === "fulfilled" ? soil.value : null,
-    flood_zone: flood.status === "fulfilled" ? flood.value : null,
-    elevation: elevation.status === "fulfilled" ? elevation.value : null,
-    hardiness_zone: hardiness.status === "fulfilled" ? hardiness.value : null,
-    wetlands: wetlands.status === "fulfilled" ? wetlands.value : null,
-    fetch_timestamp: new Date().toISOString(),
-  };
+  const { base44 } = await import("@/api/base44Client");
+  const response = await base44.functions.invoke("fetchSiteData", { lat, lon, zipCode });
+  return response?.data ?? response;
 }

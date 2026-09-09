@@ -62,17 +62,36 @@ function SiteDataField({ label, value, icon: Icon, status }) {
   );
 }
 
+/**
+ * Parses a "lat, lng" string into {lat, lon} numbers.
+ * @param {string} coords
+ * @returns {{lat: number, lon: number} | null}
+ */
+function parseGridCoordinates(coords) {
+  if (!coords) return null;
+  const parts = coords.split(",").map((s) => parseFloat(s.trim()));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return { lat: parts[0], lon: parts[1] };
+  }
+  return null;
+}
+
 export default function SiteDataCard({ profile, propertyMap, onSave }) {
   const [fetching, setFetching] = useState(false);
   const [fetchResults, setFetchResults] = useState(null);
   const [fetchError, setFetchError] = useState(null);
 
-  const hasCoords = propertyMap?.center_latitude != null && propertyMap?.center_longitude != null;
+  // Use PropertyMap center coords if available, otherwise fall back to grid_coordinates on the profile
+  const mapCoords = (propertyMap?.center_latitude != null && propertyMap?.center_longitude != null)
+    ? { lat: propertyMap.center_latitude, lon: propertyMap.center_longitude }
+    : parseGridCoordinates(profile?.grid_coordinates);
+
+  const hasCoords = mapCoords != null;
   const fetchedDate = profile?.site_data_fetched_date;
 
   const handleFetchSiteData = async () => {
     if (!hasCoords) {
-      setFetchError("No property map coordinates found. Please set your property center point on the Property Map page first.");
+      setFetchError("No coordinates found. Enter your property address and click \"Get GPS\" on the Farm Profile, or set a center point on the Property Map page.");
       return;
     }
 
@@ -81,8 +100,7 @@ export default function SiteDataCard({ profile, propertyMap, onSave }) {
     setFetchResults(null);
 
     try {
-      const lat = propertyMap.center_latitude;
-      const lon = propertyMap.center_longitude;
+      const { lat, lon } = mapCoords;
 
       // Try to get ZIP from the address, then reverse-geocode as fallback
       let zipCode = extractZipFromAddress(profile?.location_address);
@@ -156,7 +174,8 @@ export default function SiteDataCard({ profile, propertyMap, onSave }) {
           <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800 text-sm">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>
-              No property center coordinates found. Set your property's center point on the{" "}
+              No coordinates found. Enter your property address and click{" "}
+              <strong>Get GPS</strong> on the Farm Profile, or set a center point on the{" "}
               <strong>Property Map</strong> page to enable site data lookups.
             </span>
           </div>

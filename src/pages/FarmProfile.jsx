@@ -151,17 +151,32 @@ export default function FarmProfile() {
       const zipMatch = formattedAddress.match(/\b(\d{5})(?:-\d{4})?\b/);
       const zipCode = zipMatch ? zipMatch[1] : null;
 
-      fetchAllSiteData(lat, lng, zipCode).then(siteData => {
-        setFormData(prev => ({
-          ...prev,
-          soil_series: siteData.soil_series?.soil_series ?? prev.soil_series,
-          flood_zone: siteData.flood_zone?.flood_zone ?? prev.flood_zone,
-          is_in_floodplain: siteData.flood_zone?.is_in_floodplain ?? prev.is_in_floodplain,
-          elevation_ft: siteData.elevation?.elevation_ft ?? prev.elevation_ft,
-          hardiness_zone: siteData.hardiness_zone?.hardiness_zone ?? prev.hardiness_zone,
-          wetlands_present: siteData.wetlands?.wetlands_present ?? prev.wetlands_present,
+      fetchAllSiteData(lat, lng, zipCode).then(async siteData => {
+        const siteUpdate = {
+          soil_series: siteData.soil_series?.soil_series ?? formData.soil_series,
+          flood_zone: siteData.flood_zone?.flood_zone ?? formData.flood_zone,
+          is_in_floodplain: siteData.flood_zone?.is_in_floodplain ?? formData.is_in_floodplain,
+          elevation_ft: siteData.elevation?.elevation_ft ?? formData.elevation_ft,
+          hardiness_zone: siteData.hardiness_zone?.hardiness_zone ?? formData.hardiness_zone,
+          wetlands_present: siteData.wetlands?.wetlands_present ?? formData.wetlands_present,
           site_data_fetched_date: new Date().toISOString().split('T')[0]
-        }));
+        };
+
+        setFormData(prev => ({ ...prev, ...siteUpdate }));
+
+        // Auto-save site data to the profile so it persists and displays immediately
+        try {
+          await saveMutation.mutateAsync({
+            ...formData,
+            ...siteUpdate,
+            grid_coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+            location_address: formattedAddress,
+            ai_recommendations: aiRecommendations,
+            last_updated: new Date().toISOString().split('T')[0]
+          });
+        } catch (e) {
+          console.log("Could not auto-save site data:", e);
+        }
       }).catch(error => {
         console.log("Could not auto-fetch site data:", error);
       });
