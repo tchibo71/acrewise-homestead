@@ -10,6 +10,10 @@
       "type": "string",
       "description": "User's detailed scenario description"
     },
+    "clarification_qa": {
+      "type": "string",
+      "description": "Clarification questions and user answers exchanged before the final analysis"
+    },
     "uploaded_files": {
       "type": "array",
       "items": {

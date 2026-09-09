@@ -16,7 +16,8 @@ import {
   Brain,
   Camera,
   X,
-  ListChecks
+  ListChecks,
+  HelpCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,9 @@ export default function AIScenarioAnalysis() {
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [checklistRecommendations, setChecklistRecommendations] = useState("");
   const [checklistSourceTitle, setChecklistSourceTitle] = useState("");
+  const [clarifyingQuestions, setClarifyingQuestions] = useState(null);
+  const [clarificationAnswers, setClarificationAnswers] = useState([]);
+  const [accumulatedQA, setAccumulatedQA] = useState("");
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
@@ -131,6 +135,7 @@ export default function AIScenarioAnalysis() {
       setTitle("");
       setScenario("");
       setUploadedFiles([]);
+      setAccumulatedQA("");
     },
   });
 
@@ -428,7 +433,7 @@ export default function AIScenarioAnalysis() {
     return parts.length > 0 ? parts.join('; ') : 'No farm data available';
   }, [livestockList, pastureList, equipmentList, infrastructureList, waterResourceList, inventoryList, farmProfile]);
 
-  const proceedWithGeneration = async (overrodeWarning) => {
+  const proceedWithGeneration = async (overrodeWarning, clarificationData = null) => {
     setGenerating(true);
     try {
       // For criminal/warning content, still use minimal LLM response
@@ -493,7 +498,8 @@ This analysis is for informational purposes only and does not constitute legal a
       }
 
       // Score templates against the scenario text to select 2-3 as reference guidance
-      const scenarioLower = `${title} ${scenario}`.toLowerCase();
+      const effectiveScenario = clarificationData ? clarificationData.combinedScenario : scenario;
+      const scenarioLower = `${title} ${effectiveScenario}`.toLowerCase();
       const scoredTemplates = templates
         .map(template => {
           let score = 0;
@@ -534,7 +540,7 @@ This analysis is for informational purposes only and does not constitute legal a
 Title: ${title}
 
 Description:
-${scenario}
+${effectiveScenario}
 
 ## USER'S ACTUAL FARM CONTEXT (ground your advice in this real data)
 ${farmContext}
@@ -550,16 +556,35 @@ ${referenceGuidance}
 - If uploaded photos/screenshots are provided, examine them carefully and incorporate what you see into your analysis.
 - Structure your response in clear markdown with headers (## for sections, ### for subsections).
 - Include: a specific assessment of their situation, concrete step-by-step actions tailored to their details, warnings relevant to their specific case, when to seek professional help, estimated costs if applicable, and a realistic timeline.
-- Be thorough but practical. The user is a real homesteader dealing with a real problem — give them actionable, specific guidance they can use today.`;
+- Be thorough but practical. The user is a real homesteader dealing with a real problem — give them actionable, specific guidance they can use today.
+- If critical information needed to give a specific, actionable answer is missing or ambiguous, respond with 2-5 clarifying questions instead of a full analysis. Only ask questions if the answer would materially change based on the response — do not ask questions for information that doesn't affect your recommendation.
+- Return your response as JSON using the provided schema: { "needs_clarification": true, "questions": ["question1", "question2", ...] } if you need clarification, or { "needs_clarification": false, "analysis": "full markdown analysis" } if you can provide a complete answer.`;
 
       const fileUrls = uploadedFiles.map(f => f.url).filter(Boolean);
 
       const llmResponse = await base44.integrations.Core.InvokeLLM({
         prompt: generationPrompt,
         file_urls: fileUrls.length > 0 ? fileUrls : undefined,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            needs_clarification: { type: "boolean" },
+            questions: { type: "array", items: { type: "string" } },
+            analysis: { type: "string" }
+          },
+          required: ["needs_clarification"]
+        }
       });
 
-      const finalAdvice = typeof llmResponse === 'string' ? llmResponse : JSON.stringify(llmResponse);
+      // If the LLM needs clarification, show questions to the user instead of saving
+      if (llmResponse.needs_clarification && Array.isArray(llmResponse.questions) && llmResponse.questions.length > 0) {
+        setClarifyingQuestions(llmResponse.questions);
+        setClarificationAnswers(new Array(llmResponse.questions.length).fill(""));
+        setGenerating(false);
+        return;
+      }
+
+      const finalAdvice = llmResponse.analysis || (typeof llmResponse === 'string' ? llmResponse : JSON.stringify(llmResponse));
 
       const expiresDate = new Date();
       expiresDate.setDate(expiresDate.getDate() + 10);
@@ -567,6 +592,7 @@ ${referenceGuidance}
       const analysisData = {
         title,
         scenario_description: scenario,
+        clarification_qa: clarificationData ? clarificationData.qaString : "",
         uploaded_files: uploadedFiles.map(f => f.url),
         ai_analysis: finalAdvice,
         contains_criminal_warning: false,
@@ -587,6 +613,20 @@ ${referenceGuidance}
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleClarificationSubmit = async () => {
+    const newQA = clarifyingQuestions
+      .map((q, i) => `Q: ${q}\nA: ${clarificationAnswers[i] || ""}`)
+      .join('\n\n');
+    const updatedQA = accumulatedQA ? `${accumulatedQA}\n\n${newQA}` : newQA;
+    const combinedScenario = `${scenario}\n\n--- Clarification Q&A ---\n${updatedQA}`;
+
+    setAccumulatedQA(updatedQA);
+    setClarifyingQuestions(null);
+    setClarificationAnswers([]);
+
+    await proceedWithGeneration(false, { qaString: updatedQA, combinedScenario });
   };
 
   const handlePrintAnalysis = (analysis) => {
@@ -663,6 +703,13 @@ ${referenceGuidance}
           <h2>Scenario Description</h2>
           <div class="content">${analysis.scenario_description}</div>
         </div>
+        
+        ${analysis.clarification_qa ? `
+        <div class="section">
+          <h2>Clarification Q&A</h2>
+          <div class="content">${analysis.clarification_qa}</div>
+        </div>
+        ` : ''}
         
         <div class="section">
           <h2>AI Analysis & Recommendations</h2>
@@ -940,6 +987,65 @@ ${referenceGuidance}
                     </>
                   )}
                 </Button>
+
+                {clarifyingQuestions && (
+                  <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg space-y-4">
+                    <div className="flex items-center gap-2">
+                      <HelpCircle className="w-5 h-5 text-blue-600" />
+                      <h3 className="font-semibold text-blue-900">Clarification Needed</h3>
+                    </div>
+                    <p className="text-sm text-blue-800">
+                      The AI needs a bit more information to give you a specific, actionable answer:
+                    </p>
+                    {clarifyingQuestions.map((question, idx) => (
+                      <div key={idx}>
+                        <Label className="text-sm font-medium text-gray-900">
+                          {idx + 1}. {question}
+                        </Label>
+                        <Textarea
+                          value={clarificationAnswers[idx] || ""}
+                          onChange={(e) => {
+                            const newAnswers = [...clarificationAnswers];
+                            newAnswers[idx] = e.target.value;
+                            setClarificationAnswers(newAnswers);
+                          }}
+                          rows={2}
+                          className="mt-1 resize-none"
+                          placeholder="Your answer..."
+                        />
+                      </div>
+                    ))}
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={handleClarificationSubmit}
+                        disabled={generating || clarificationAnswers.some(a => !a?.trim())}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      >
+                        {generating ? (
+                          <>
+                            <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                            Generating Analysis...
+                          </>
+                        ) : (
+                          <>
+                            <Brain className="w-5 h-5 mr-2" />
+                            Submit answers and get my analysis
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setClarifyingQuestions(null);
+                          setClarificationAnswers([]);
+                        }}
+                        disabled={generating}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="flex items-start gap-2">
@@ -1258,6 +1364,15 @@ ${referenceGuidance}
                       {selectedAnalysis.scenario_description}
                     </div>
                   </div>
+
+                  {selectedAnalysis.clarification_qa && (
+                    <div>
+                      <h3 className="font-semibold text-gray-900 mb-2">Clarification Q&A:</h3>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-gray-700 whitespace-pre-wrap">
+                        {selectedAnalysis.clarification_qa}
+                      </div>
+                    </div>
+                  )}
 
                   {selectedAnalysis.uploaded_files && selectedAnalysis.uploaded_files.length > 0 && (
                     <div>
