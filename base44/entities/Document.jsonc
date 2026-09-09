@@ -1,0 +1,105 @@
+{
+  "name": "Document",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title of the document"
+    },
+    "document_type": {
+      "type": "string",
+      "enum": [
+        "receipt",
+        "invoice",
+        "warranty",
+        "manual",
+        "permit",
+        "insurance_policy",
+        "veterinary_record",
+        "soil_test_report",
+        "contract",
+        "certification",
+        "other"
+      ],
+      "description": "Type of document"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "uploaded file location"
+    },
+    "issue_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the document was issued"
+    },
+    "expiration_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the document expires"
+    },
+    "issuing_organization": {
+      "type": "string",
+      "description": "Organization that issued the document"
+    },
+    "related_entity_type": {
+      "type": "string",
+      "description": "e.g. Livestock, Equipment, Infrastructure - what this document is about"
+    },
+    "related_entity_id": {
+      "type": "string",
+      "description": "ID of the specific record this relates to"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Tags for categorization and search"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "title",
+    "document_type",
+    "file_url"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

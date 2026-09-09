@@ -25,7 +25,8 @@ import {
   AlertTriangle,
   Building2,
   Footprints,
-  Bug
+  Bug,
+  FileText
 } from "lucide-react";
 import {
   Sidebar,
@@ -127,6 +128,11 @@ const navigationItems = [
     url: createPageUrl("EmergencyLogs"),
     icon: AlertTriangle,
     proOnly: true,
+  },
+  {
+    title: "Documents",
+    url: createPageUrl("Documents"),
+    icon: FileText,
   },
   ];
 

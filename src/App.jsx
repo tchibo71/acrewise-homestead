@@ -16,6 +16,7 @@ const GrazingManagement = React.lazy(() => import('./pages/GrazingManagement'));
 const BeeHiveManagement = React.lazy(() => import('./pages/BeeHiveManagement'));
 const BeeHiveDetail = React.lazy(() => import('./pages/BeeHiveDetail'));
 const EquipmentDetail = React.lazy(() => import('./pages/EquipmentDetail'));
+const Documents = React.lazy(() => import('./pages/Documents'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -97,6 +98,11 @@ const AuthenticatedApp = () => {
         <Route path="/EquipmentDetail" element={
           <LayoutWrapper currentPageName="EquipmentDetail">
             <EquipmentDetail />
+          </LayoutWrapper>
+        } />
+        <Route path="/Documents" element={
+          <LayoutWrapper currentPageName="Documents">
+            <Documents />
           </LayoutWrapper>
         } />
         <Route path="*" element={<PageNotFound />} />
