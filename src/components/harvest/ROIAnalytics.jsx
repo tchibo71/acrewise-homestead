@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, DollarSign, Sprout, Target, Package } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Sprout, Target, Package, Heart } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 export default function ROIAnalytics() {
@@ -29,17 +29,27 @@ export default function ROIAnalytics() {
     queryFn: () => base44.entities.Production.list('-production_date'),
   });
 
-  const { data: expenses = [] } = useQuery({
+  const { data: transactions = [] } = useQuery({
     queryKey: ['financial-transactions'],
-    queryFn: async () => {
-      const txns = await base44.entities.FinancialTransaction.list('-transaction_date');
-      return txns.filter(t => t.transaction_type === 'expense');
-    },
+    queryFn: () => base44.entities.FinancialTransaction.list('-transaction_date'),
   });
 
   const { data: livestock = [] } = useQuery({
     queryKey: ['livestock'],
     queryFn: () => base44.entities.Livestock.list(),
+  });
+
+  const { data: sales = [] } = useQuery({
+    queryKey: ['sales'],
+    queryFn: () => base44.entities.Sale.list('-sale_date'),
+  });
+
+  const { data: farmProfile = null } = useQuery({
+    queryKey: ['farm-profile'],
+    queryFn: async () => {
+      const profiles = await base44.entities.FarmProfile.list();
+      return profiles[0] || null;
+    },
   });
 
   // Lazy calculations - only run when user requests
@@ -51,8 +61,8 @@ export default function ROIAnalytics() {
       const totalHarvested = gardenHarvests.reduce((sum, h) => sum + h.quantity_harvested, 0);
       
       // Estimate costs from expenses linked to this plot or general gardening
-      const relatedExpenses = expenses.filter(e => 
-        e.category === 'seeds_plants' || e.category === 'fertilizer'
+      const relatedExpenses = transactions.filter(e => 
+        e.transaction_type === 'expense' && (e.category === 'seeds_plants' || e.category === 'fertilizer')
       );
       const estimatedCost = relatedExpenses.length > 0 
         ? relatedExpenses.reduce((sum, e) => sum + e.amount, 0) / gardens.length 
@@ -71,7 +81,7 @@ export default function ROIAnalytics() {
         harvestCount: gardenHarvests.length
       };
     }).filter(g => g.harvestCount > 0);
-  }, [gardens, harvests, expenses, showCalculations]);
+  }, [gardens, harvests, transactions, showCalculations]);
 
   // Calculate cost per dozen eggs
   const calculateEggROI = React.useCallback(() => {
@@ -85,7 +95,7 @@ export default function ROIAnalytics() {
     }, 0);
 
     // Calculate feed costs for egg-laying livestock
-    const feedExpenses = expenses.filter(e => e.category === 'feed');
+    const feedExpenses = transactions.filter(e => e.transaction_type === 'expense' && e.category === 'feed');
     const chickens = livestock.filter(l => l.animal_type === 'chicken' && l.purpose === 'eggs');
     
     const estimatedFeedCost = feedExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -106,14 +116,63 @@ export default function ROIAnalytics() {
       roi: roi.toFixed(1),
       chickenCount: chickens.length
     };
-  }, [production, expenses, showCalculations]);
+  }, [production, transactions, showCalculations]);
+
+  // Calculate per-animal livestock profitability
+  const calculateLivestockProfitability = React.useCallback(() => {
+    if (!showCalculations) return null;
+    if (livestock.length === 0) return null;
+
+    const results = livestock.map(animal => {
+      const animalTxns = transactions.filter(t => t.livestock_id === animal.id);
+      const totalCost = (animal.acquisition_cost || 0) +
+        animalTxns.filter(t => t.transaction_type === 'expense').reduce((sum, t) => sum + (t.amount || 0), 0);
+      const incomeFromTxns = animalTxns.filter(t => t.transaction_type === 'income').reduce((sum, t) => sum + (t.amount || 0), 0);
+
+      let saleIncome = 0;
+      if (animal.status === 'sold') {
+        const saleRecord = sales.find(s => s.livestock_id === animal.id);
+        if (saleRecord) {
+          saleIncome = saleRecord.sale_price || 0;
+        }
+      }
+      const totalIncome = incomeFromTxns + saleIncome;
+      const netProfit = totalIncome - totalCost;
+
+      return {
+        id: animal.id,
+        name: animal.name_or_tag || 'Unknown',
+        type: animal.animal_type,
+        status: animal.status,
+        totalCost,
+        totalIncome,
+        netProfit,
+        hasSale: animal.status === 'sold' && !!sales.find(s => s.livestock_id === animal.id)
+      };
+    });
+
+    const grandTotalCost = results.reduce((sum, r) => sum + r.totalCost, 0);
+    const grandTotalIncome = results.reduce((sum, r) => sum + r.totalIncome, 0);
+    const grandNetProfit = grandTotalIncome - grandTotalCost;
+    const totalAcreage = farmProfile?.total_acreage;
+    const incomePerAcre = totalAcreage > 0 ? grandTotalIncome / totalAcreage : null;
+
+    return {
+      animals: results,
+      grandTotalCost,
+      grandTotalIncome,
+      grandNetProfit,
+      incomePerAcre
+    };
+  }, [livestock, transactions, sales, farmProfile, showCalculations]);
 
   const gardenROI = calculateGardenROI();
   const eggROI = calculateEggROI();
+  const livestockROI = calculateLivestockProfitability();
 
-  const hasData = gardenROI.length > 0 || eggROI;
+  const hasData = gardenROI.length > 0 || eggROI || livestockROI;
 
-  const canCalculate = harvests.length > 0 || production.length > 0;
+  const canCalculate = harvests.length > 0 || production.length > 0 || livestock.length > 0;
 
   if (!showCalculations) {
     return (
@@ -262,6 +321,84 @@ export default function ROIAnalytics() {
                 <p className="text-xs text-green-800">
                   <strong>💰 ROI Insight:</strong> Track which plots generate the best returns per square foot 
                   to optimize your planting strategy and prove the value of your homesteading efforts.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Livestock Profitability */}
+          {livestockROI && livestockROI.animals.length > 0 && (
+            <div className="bg-white rounded-lg p-4 border-2 border-rose-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-rose-600" />
+                  Livestock Profitability
+                </h3>
+                <Badge className={livestockROI.grandNetProfit >= 0 ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}>
+                  {livestockROI.grandNetProfit >= 0 ? '+' : ''}${livestockROI.grandNetProfit.toFixed(2)} Net
+                </Badge>
+              </div>
+
+              {/* Summary Row */}
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 mb-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-600">Total Cost (All Animals)</p>
+                    <p className="text-lg font-bold text-red-700">${livestockROI.grandTotalCost.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Total Income (All Animals)</p>
+                    <p className="text-lg font-bold text-green-700">${livestockROI.grandTotalIncome.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600">Net Profit/Loss</p>
+                    <p className={`text-lg font-bold ${livestockROI.grandNetProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                      {livestockROI.grandNetProfit >= 0 ? '+' : ''}${livestockROI.grandNetProfit.toFixed(2)}
+                    </p>
+                  </div>
+                  {livestockROI.incomePerAcre !== null && (
+                    <div>
+                      <p className="text-xs text-gray-600">Income Per Acre</p>
+                      <p className="text-lg font-bold text-blue-700">${livestockROI.incomePerAcre.toFixed(2)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Per-Animal Breakdown */}
+              <div className="space-y-3">
+                {livestockROI.animals.map((animal) => (
+                  <div key={animal.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                        {animal.name}
+                        {animal.hasSale && (
+                          <Badge className="bg-purple-100 text-purple-800 text-xs">Sold</Badge>
+                        )}
+                      </h4>
+                      <Badge className={animal.netProfit >= 0 ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}>
+                        {animal.netProfit >= 0 ? '+' : ''}${animal.netProfit.toFixed(2)}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-600">Total Cost</p>
+                        <p className="font-bold text-red-700">${animal.totalCost.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600">Total Income</p>
+                        <p className="font-bold text-green-700">${animal.totalIncome.toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-rose-50 rounded p-3 mt-4">
+                <p className="text-xs text-rose-800">
+                  <strong>📊 Profitability Insight:</strong> Track acquisition costs and ongoing expenses against
+                  income from sales and production to identify your most profitable animals.
+                  {livestockROI.incomePerAcre !== null && ` Your livestock generates $${livestockROI.incomePerAcre.toFixed(2)} per acre.`}
                 </p>
               </div>
             </div>
