@@ -14,6 +14,22 @@
       "type": "string",
       "description": "Location details or landmarks"
     },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude of the pasture center point"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude of the pasture center point"
+    },
+    "flood_zone": {
+      "type": "string",
+      "description": "FEMA flood zone designation at the pasture center point"
+    },
+    "wetlands_present": {
+      "type": "boolean",
+      "description": "Whether FWS National Wetlands Inventory data indicates wetlands at the pasture"
+    },
     "rest_period_days": {
       "type": "number",
       "default": 21,
