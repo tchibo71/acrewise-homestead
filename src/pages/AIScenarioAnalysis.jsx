@@ -76,7 +76,6 @@ export default function AIScenarioAnalysis() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [showFirstTimeDisclaimer, setShowFirstTimeDisclaimer] = useState(false);
-  const [hasAcceptedFirstTime, setHasAcceptedFirstTime] = useState(false);
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
@@ -99,8 +98,8 @@ export default function AIScenarioAnalysis() {
     enabled: subscriptionData.isPro
   });
 
-  // Check if user has already accepted disclaimer
-  const { data: userDisclaimers = [] } = useQuery({
+  // Check if user has already accepted disclaimer (persisted in DB)
+  const { data: userDisclaimers = [], isLoading: isLoadingDisclaimers } = useQuery({
     queryKey: ['user-disclaimers', user?.email],
     queryFn: async () => {
       if (!user?.email) return [];
@@ -110,12 +109,12 @@ export default function AIScenarioAnalysis() {
     enabled: subscriptionData.isPro && !!user?.email
   });
 
-  // Check on component mount if user needs to see first-time disclaimer
+  // Show first-time disclaimer ONLY after the DB query confirms no prior acceptance
   React.useEffect(() => {
-    if (subscriptionData.isPro && user?.email && userDisclaimers.length === 0 && !hasAcceptedFirstTime) {
+    if (subscriptionData.isPro && user?.email && !isLoadingDisclaimers && userDisclaimers.length === 0) {
       setShowFirstTimeDisclaimer(true);
     }
-  }, [subscriptionData.isPro, user?.email, userDisclaimers, hasAcceptedFirstTime]);
+  }, [subscriptionData.isPro, user?.email, userDisclaimers, isLoadingDisclaimers]);
 
   const createAnalysisMutation = useMutation({
     mutationFn: (data) => base44.entities.ScenarioAnalysis.create(data),
@@ -130,6 +129,9 @@ export default function AIScenarioAnalysis() {
 
   const createDisclaimerMutation = useMutation({
     mutationFn: (data) => base44.entities.DisclaimerAcceptance.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-disclaimers'] });
+    },
   });
 
   const deleteAnalysisMutation = useMutation({
@@ -184,8 +186,8 @@ export default function AIScenarioAnalysis() {
       return;
     }
 
-    // Check if first-time disclaimer needs to be shown
-    if (!hasAcceptedFirstTime && userDisclaimers.length === 0) {
+    // Check if first-time disclaimer needs to be shown (DB is source of truth)
+    if (userDisclaimers.length === 0) {
       setPendingAnalysis({ title, scenario, uploadedFiles });
       setShowFirstTimeDisclaimer(true);
       return;
@@ -222,7 +224,6 @@ export default function AIScenarioAnalysis() {
         expires_date: disclaimerExpiresDate.toISOString().split('T')[0]
       });
 
-      setHasAcceptedFirstTime(true);
       setShowFirstTimeDisclaimer(false);
 
       // If there was a pending analysis, continue with it
