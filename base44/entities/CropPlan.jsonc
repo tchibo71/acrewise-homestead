@@ -19,6 +19,50 @@
       "type": "string",
       "format": "date"
     },
+    "days_to_harvest": {
+      "type": "number",
+      "description": "Days from planting/transplanting to harvest"
+    },
+    "start_indoors_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When seeds were started indoors"
+    },
+    "transplant_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When seedlings were transplanted outdoors"
+    },
+    "hardening_days": {
+      "type": "number",
+      "description": "Days needed to harden off seedlings before transplanting"
+    },
+    "planting_method": {
+      "type": "string",
+      "enum": [
+        "direct_sow",
+        "start_indoors",
+        "transplant_seedling"
+      ],
+      "description": "How this crop was planted"
+    },
+    "is_second_planting": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this is a second/succession planting"
+    },
+    "frost_tolerance": {
+      "type": "string",
+      "description": "Frost tolerance: Frost tolerant, Half-hardy, or Frost sensitive"
+    },
+    "germination_days": {
+      "type": "number",
+      "description": "Days for seeds to germinate"
+    },
+    "succession_interval_days": {
+      "type": "number",
+      "description": "How often to re-plant for continuous harvest (0 if not applicable)"
+    },
     "location": {
       "type": "string",
       "description": "Field or plot location"

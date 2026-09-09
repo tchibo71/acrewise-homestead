@@ -31,6 +31,7 @@ export default function WhatToPlantNow() {
   const [recommendations, setRecommendations] = useState(null);
   const [loading, setLoading] = useState(false);
   const [addedCrops, setAddedCrops] = useState(new Set());
+  const [addedSecondPlantings, setAddedSecondPlantings] = useState(new Set());
 
   // Load farm profile to get saved zone
   const { data: farmProfiles = [] } = useQuery({
@@ -54,10 +55,17 @@ export default function WhatToPlantNow() {
   useEffect(() => {
     const planned = new Set(
       cropPlans
-        .filter(p => p.year === new Date().getFullYear())
+        .filter(p => p.year === new Date().getFullYear() && !p.is_second_planting)
         .map(p => p.crop_name?.toLowerCase())
     );
     setAddedCrops(planned);
+
+    const secondPlanned = new Set(
+      cropPlans
+        .filter(p => p.year === new Date().getFullYear() && p.is_second_planting)
+        .map(p => p.crop_name?.toLowerCase())
+    );
+    setAddedSecondPlantings(secondPlanned);
   }, [cropPlans]);
 
   const saveZoneMutation = useMutation({
@@ -72,10 +80,29 @@ export default function WhatToPlantNow() {
 
   const addToPlanMutation = useMutation({
     mutationFn: (crop) => {
+      const today = new Date();
+      const plantingDate = today.toISOString().split("T")[0];
+      const harvestDate = new Date(
+        today.getTime() + (crop.days_to_harvest || 0) * 86400000
+      ).toISOString().split("T")[0];
+
+      let plantingMethod = "direct_sow";
+      if (crop.start_indoors_dates) plantingMethod = "start_indoors";
+      else if (crop.transplant_dates) plantingMethod = "transplant_seedling";
+
       return base44.entities.CropPlan.create({
         crop_name: crop.name,
-        year: new Date().getFullYear(),
-        planting_date: new Date().toISOString().split("T")[0],
+        year: today.getFullYear(),
+        planting_date: plantingDate,
+        harvest_date: harvestDate,
+        days_to_harvest: crop.days_to_harvest,
+        planting_method: plantingMethod,
+        start_indoors_date: crop.start_indoors_dates ? plantingDate : null,
+        hardening_days: crop.hardening_days || null,
+        frost_tolerance: crop.frost_tolerance || null,
+        germination_days: crop.germination_days || null,
+        succession_interval_days: crop.succession_interval_days || 0,
+        is_second_planting: false,
         notes: `Auto-added from planting recommendations. ${crop.description || ""}`.trim(),
         ai_recommendations: `Spacing: ${crop.spacing || "N/A"}. Soil temp: ${crop.soil_temperature || "N/A"}. Watering: ${crop.watering || "N/A"}. Companions: ${(crop.companion_plants || []).join(", ")}. Harvest: ${crop.harvest_tips || "N/A"}`,
       });
@@ -87,6 +114,49 @@ export default function WhatToPlantNow() {
     },
     onError: () => {
       toast({ title: "Could not add crop to plan", variant: "destructive" });
+    },
+  });
+
+  const addSecondPlantingMutation = useMutation({
+    mutationFn: (crop) => {
+      const year = new Date().getFullYear();
+      let plantingDateStr = new Date().toISOString().split("T")[0];
+      // Try to parse the second planting window for a better date
+      if (crop.second_planting_window) {
+        const match = crop.second_planting_window.match(/(\w+)\s+(\d+)/);
+        if (match) {
+          const date = new Date(`${match[1]} ${match[2]}, ${year}`);
+          if (!isNaN(date)) {
+            plantingDateStr = date.toISOString().split("T")[0];
+          }
+        }
+      }
+      const plantingDate = new Date(plantingDateStr);
+      const harvestDate = new Date(
+        plantingDate.getTime() + (crop.days_to_harvest || 0) * 86400000
+      ).toISOString().split("T")[0];
+
+      return base44.entities.CropPlan.create({
+        crop_name: crop.name,
+        year: year,
+        planting_date: plantingDateStr,
+        harvest_date: harvestDate,
+        days_to_harvest: crop.days_to_harvest,
+        planting_method: crop.start_indoors_dates ? "start_indoors" : "direct_sow",
+        frost_tolerance: crop.frost_tolerance || null,
+        germination_days: crop.germination_days || null,
+        is_second_planting: true,
+        notes: `Second/succession planting. Window: ${crop.second_planting_window}. ${crop.description || ""}`.trim(),
+        ai_recommendations: `Second planting window: ${crop.second_planting_window}. Spacing: ${crop.spacing || "N/A"}. Harvest: ${crop.harvest_tips || "N/A"}`,
+      });
+    },
+    onSuccess: (data, crop) => {
+      setAddedSecondPlantings(prev => new Set([...prev, crop.name.toLowerCase()]));
+      queryClient.invalidateQueries(['crop-plans']);
+      toast({ title: `${crop.name} second planting added` });
+    },
+    onError: () => {
+      toast({ title: "Could not add second planting", variant: "destructive" });
     },
   });
 
@@ -116,7 +186,8 @@ For each crop, provide:
 - name: crop name
 - category: vegetable, herb, or fruit
 - difficulty: easy, moderate, or challenging
-- days_to_harvest: number of days from planting to harvest
+- days_to_harvest: number of days from planting/transplanting to harvest
+- germination_days: number of days for seeds to germinate
 - planting_depth: e.g., "0.5 inches deep"
 - spacing: e.g., "4 inches apart, 12 inches between rows"
 - soil_temperature: ideal soil temp range for germination, e.g., "45°F - 75°F"
@@ -125,13 +196,24 @@ For each crop, provide:
 - companion_plants: array of 3-5 companion plant names
 - harvest_tips: brief harvest readiness signs
 - description: one sentence describing the crop
+- frost_tolerance: one of "Frost tolerant" (survives hard frost), "Half-hardy" (survives light frost), "Frost sensitive" (killed by any frost)
+- start_indoors_relative: relative timing for starting seeds indoors, e.g., "6-8 weeks before last frost" — null if not applicable for this crop
+- start_indoors_dates: calculated calendar date range for zone ${selectedZone}, e.g., "Jan 25 – Feb 15" — null if not applicable
+- hardening_days: number of days to harden off seedlings before transplanting (typically 7) — null if not started indoors
+- transplant_relative: relative timing for transplanting seedlings outdoors, e.g., "1-2 weeks after last frost" — null if not applicable
+- transplant_dates: calculated calendar date range for zone ${selectedZone} — null if not applicable
+- direct_sow_relative: relative timing for direct sowing outdoors, e.g., "2-4 weeks before last frost" — null if not applicable
+- direct_sow_dates: calculated calendar date range for zone ${selectedZone} — null if not applicable
+- second_planting_possible: boolean — can this crop be planted a second time later in the season?
+- second_planting_window: date range for the second planting, e.g., "Aug 1 – Aug 15" — null if not possible
+- succession_interval_days: how often to re-plant for continuous harvest, in days (e.g., 14 for radishes every 2 weeks) — 0 if not applicable
 
 Also provide:
 - first_frost_date: typical first fall frost date for zone ${selectedZone}
 - last_frost_date: typical last spring frost date for zone ${selectedZone}
 - zone_summary: a brief summary of what's happening this week in this zone
 
-Return only crops that can genuinely be planted outdoors or started indoors right now. If it's not a good time to plant anything outdoors, include crops that can be started indoors for later transplanting.`,
+Return only crops that can genuinely be planted outdoors or started indoors right now. For each crop, include whichever planting methods apply (start_indoors, direct_sow, or both). Not all crops support all methods — set inapplicable fields to null.`,
         add_context_from_internet: true,
         model: "gemini_3_flash",
         response_json_schema: {
@@ -146,6 +228,7 @@ Return only crops that can genuinely be planted outdoors or started indoors righ
                   category: { type: "string" },
                   difficulty: { type: "string" },
                   days_to_harvest: { type: "number" },
+                  germination_days: { type: "number" },
                   planting_depth: { type: "string" },
                   spacing: { type: "string" },
                   soil_temperature: { type: "string" },
@@ -154,6 +237,17 @@ Return only crops that can genuinely be planted outdoors or started indoors righ
                   companion_plants: { type: "array", items: { type: "string" } },
                   harvest_tips: { type: "string" },
                   description: { type: "string" },
+                  frost_tolerance: { type: "string" },
+                  start_indoors_relative: { type: "string" },
+                  start_indoors_dates: { type: "string" },
+                  hardening_days: { type: "number" },
+                  transplant_relative: { type: "string" },
+                  transplant_dates: { type: "string" },
+                  direct_sow_relative: { type: "string" },
+                  direct_sow_dates: { type: "string" },
+                  second_planting_possible: { type: "boolean" },
+                  second_planting_window: { type: "string" },
+                  succession_interval_days: { type: "number" },
                 },
               },
             },
@@ -307,7 +401,9 @@ Return only crops that can genuinely be planted outdoors or started indoors righ
                   key={i}
                   crop={crop}
                   onAddToPlan={(c) => addToPlanMutation.mutate(c)}
+                  onAddSecondPlanting={(c) => addSecondPlantingMutation.mutate(c)}
                   added={addedCrops.has(crop.name?.toLowerCase())}
+                  secondAdded={addedSecondPlantings.has(crop.name?.toLowerCase())}
                 />
               ))}
             </div>

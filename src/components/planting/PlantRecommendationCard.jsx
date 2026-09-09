@@ -11,8 +11,14 @@ import {
   Calendar,
   Users,
   CheckCircle2,
-  Plus
+  Plus,
+  Snowflake,
+  Flame,
+  Leaf,
+  Clock,
+  Repeat,
 } from "lucide-react";
+import PlantingSchedule from "./PlantingSchedule";
 
 const difficultyColors = {
   easy: "bg-green-100 text-green-800 border-green-300",
@@ -27,8 +33,32 @@ const categoryEmojis = {
   flower: "🌸",
 };
 
-export default function PlantRecommendationCard({ crop, onAddToPlan, added }) {
+const frostToleranceConfig = {
+  "frost tolerant": { Icon: Snowflake, color: "bg-blue-100 text-blue-800 border-blue-300" },
+  "half-hardy": { Icon: Leaf, color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  "frost sensitive": { Icon: Flame, color: "bg-red-100 text-red-800 border-red-300" },
+};
+
+export default function PlantRecommendationCard({
+  crop,
+  onAddToPlan,
+  onAddSecondPlanting,
+  added,
+  secondAdded,
+}) {
   const [showDetails, setShowDetails] = useState(false);
+
+  // Calculate target harvest date from today
+  const today = new Date();
+  const harvestDate = new Date(
+    today.getTime() + (crop.days_to_harvest || 0) * 86400000
+  );
+  const harvestDateStr = harvestDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  const frostConfig = frostToleranceConfig[crop.frost_tolerance?.toLowerCase()];
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -46,14 +76,15 @@ export default function PlantRecommendationCard({ crop, onAddToPlan, added }) {
           </div>
           <div className="flex flex-col items-end gap-1">
             {crop.difficulty && (
-              <Badge className={`${difficultyColors[crop.difficulty?.toLowerCase()] || difficultyColors.moderate} border`}>
+              <Badge
+                className={`${
+                  difficultyColors[crop.difficulty?.toLowerCase()] ||
+                  difficultyColors.moderate
+                } border`}
+              >
                 {crop.difficulty}
               </Badge>
             )}
-            <span className="text-xs text-gray-500 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {crop.days_to_harvest} days
-            </span>
           </div>
         </div>
 
@@ -61,6 +92,36 @@ export default function PlantRecommendationCard({ crop, onAddToPlan, added }) {
         {crop.description && (
           <p className="text-sm text-gray-600 mb-3">{crop.description}</p>
         )}
+
+        {/* Frost tolerance + germination badges */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {frostConfig && (
+            <Badge className={`${frostConfig.color} border`}>
+              <frostConfig.Icon className="w-3 h-3 mr-1" />
+              {crop.frost_tolerance}
+            </Badge>
+          )}
+          {crop.germination_days && (
+            <Badge variant="outline" className="text-xs">
+              <Clock className="w-3 h-3 mr-1" />
+              Germinates in {crop.germination_days} days
+            </Badge>
+          )}
+        </div>
+
+        {/* Planting Schedule */}
+        <PlantingSchedule crop={crop} />
+
+        {/* Harvest info */}
+        <div className="flex items-center gap-2 mb-3 p-2.5 bg-amber-50 rounded-lg border border-amber-200">
+          <Calendar className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-amber-800">
+              Harvest in {crop.days_to_harvest} days
+            </p>
+            <p className="text-xs text-gray-600">Target: ~{harvestDateStr}</p>
+          </div>
+        </div>
 
         {/* Quick stats grid */}
         <div className="grid grid-cols-2 gap-2 text-xs mb-3">
@@ -105,7 +166,11 @@ export default function PlantRecommendationCard({ crop, onAddToPlan, added }) {
             </div>
             <div className="flex flex-wrap gap-1">
               {crop.companion_plants.map((plant, i) => (
-                <Badge key={i} variant="secondary" className="text-xs bg-purple-50 text-purple-700">
+                <Badge
+                  key={i}
+                  variant="secondary"
+                  className="text-xs bg-purple-50 text-purple-700"
+                >
                   {plant}
                 </Badge>
               ))}
@@ -126,6 +191,41 @@ export default function PlantRecommendationCard({ crop, onAddToPlan, added }) {
               <div className="mt-1.5 p-2.5 bg-green-50 rounded-lg">
                 <p className="text-xs text-gray-700">{crop.harvest_tips}</p>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Second planting info */}
+        {crop.second_planting_possible && crop.second_planting_window && (
+          <div className="mb-3 p-2.5 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Repeat className="w-3.5 h-3.5 text-indigo-600" />
+              <span className="text-xs font-semibold text-indigo-800">
+                2nd Planting Possible
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 mb-2">
+              Window: {crop.second_planting_window}
+            </p>
+            {onAddSecondPlanting && (
+              <Button
+                onClick={() => onAddSecondPlanting(crop)}
+                disabled={secondAdded}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                size="sm"
+              >
+                {secondAdded ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    2nd Planting Added
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Add 2nd Planting
+                  </>
+                )}
+              </Button>
             )}
           </div>
         )}
