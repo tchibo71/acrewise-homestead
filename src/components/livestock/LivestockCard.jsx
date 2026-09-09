@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   Calendar,
   Weight,
   Heart,
-  Activity
+  Activity,
+  Bug,
 } from "lucide-react";
 import AnimalIcon from "@/components/livestock/AnimalIcon";
 import { ANIMAL_TYPE_LABELS, PURPOSE_LABELS } from "@/components/livestock/livestockConstants";
@@ -38,6 +40,8 @@ export default function LivestockCard({ animal }) {
     }
     return ANIMAL_TYPE_LABELS[animal.animal_type] || animal.animal_type?.replace(/_/g, ' ');
   };
+
+  const isBeeHive = animal.animal_type === "bee_hive";
 
   return (
     <Card 
@@ -91,6 +95,21 @@ export default function LivestockCard({ animal }) {
             </div>
           )}
         </div>
+
+        {isBeeHive && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full border-amber-400 text-amber-700 hover:bg-amber-50"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate("/BeeHiveManagement");
+            }}
+          >
+            <Bug className="w-4 h-4 mr-2" />
+            Manage Bee Hives
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

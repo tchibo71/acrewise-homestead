@@ -1,0 +1,110 @@
+{
+  "name": "BeeHive",
+  "type": "object",
+  "properties": {
+    "hive_name": {
+      "type": "string",
+      "description": "Name or identifier for the hive"
+    },
+    "hive_type": {
+      "type": "string",
+      "enum": [
+        "langstroth",
+        "top_bar",
+        "warre",
+        "other"
+      ],
+      "description": "Type of hive structure"
+    },
+    "install_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the hive was installed"
+    },
+    "queen_source": {
+      "type": "string",
+      "description": "Where the queen came from (supplier, feral, etc.)"
+    },
+    "queen_marked_color": {
+      "type": "string",
+      "enum": [
+        "white",
+        "yellow",
+        "red",
+        "green",
+        "blue",
+        "unmarked"
+      ],
+      "description": "Queen marking color (international color convention)"
+    },
+    "queen_last_seen_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last date the queen was spotted"
+    },
+    "colony_strength": {
+      "type": "string",
+      "enum": [
+        "weak",
+        "moderate",
+        "strong"
+      ],
+      "description": "Assessed colony strength"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "swarmed",
+        "absconded",
+        "dead",
+        "combined"
+      ],
+      "default": "active",
+      "description": "Current hive status"
+    },
+    "location_notes": {
+      "type": "string",
+      "description": "Where on the property the hive is located"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "hive_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

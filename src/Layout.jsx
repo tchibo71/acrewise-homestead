@@ -24,7 +24,8 @@ import {
   ShoppingBag,
   AlertTriangle,
   Building2,
-  Footprints
+  Footprints,
+  Bug
 } from "lucide-react";
 import {
   Sidebar,
@@ -146,6 +147,12 @@ const operationsItems = [
     title: "Dairy Production",
     url: createPageUrl("DairyProduction"),
     icon: Milk,
+    proOnly: true,
+  },
+  {
+    title: "Bee Hives",
+    url: "/BeeHiveManagement",
+    icon: Bug,
     proOnly: true,
   },
   {

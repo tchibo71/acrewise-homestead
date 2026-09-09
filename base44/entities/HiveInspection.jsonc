@@ -1,0 +1,107 @@
+{
+  "name": "HiveInspection",
+  "type": "object",
+  "properties": {
+    "hive_id": {
+      "type": "string",
+      "description": "ID of the hive inspected"
+    },
+    "inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of inspection"
+    },
+    "brood_pattern": {
+      "type": "string",
+      "enum": [
+        "good",
+        "spotty",
+        "none",
+        "not_checked"
+      ],
+      "description": "Observed brood pattern quality"
+    },
+    "queen_seen": {
+      "type": "boolean",
+      "description": "Whether the queen was spotted during inspection"
+    },
+    "eggs_seen": {
+      "type": "boolean",
+      "description": "Whether eggs were present"
+    },
+    "varroa_mite_check_done": {
+      "type": "boolean",
+      "description": "Whether a varroa mite count was performed"
+    },
+    "varroa_mite_count": {
+      "type": "number",
+      "description": "Mites per 100 bees if tested"
+    },
+    "temperament": {
+      "type": "string",
+      "enum": [
+        "calm",
+        "defensive",
+        "aggressive"
+      ],
+      "description": "Colony temperament during inspection"
+    },
+    "stores_level": {
+      "type": "string",
+      "enum": [
+        "low",
+        "adequate",
+        "abundant"
+      ],
+      "description": "Honey and pollen stores assessment"
+    },
+    "actions_taken": {
+      "type": "string",
+      "description": "Actions taken during or after inspection"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "hive_id",
+    "inspection_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
