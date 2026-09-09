@@ -1,5 +1,26 @@
 // Centralized weather utility functions
-export const WEATHER_API_KEY = "oDYfOfwz6YdZEMXyVEKqQAeirSHdsV8i";
+import { appParams } from "@/lib/app-params";
+
+// Call the getWeather backend function (API key stays server-side)
+const callWeatherFunction = async (payload) => {
+  const url = `${appParams.serverUrl}/api/apps/${appParams.appId}/functions/getWeather`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(appParams.token ? { 'Authorization': `Bearer ${appParams.token}` } : {}),
+      'X-Origin-URL': window.location.href,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Weather request failed (${response.status})`);
+  }
+
+  return response.json();
+};
 
 // Fetch current weather conditions
 export const fetchCurrentWeather = async (latitude, longitude) => {
@@ -7,18 +28,8 @@ export const fetchCurrentWeather = async (latitude, longitude) => {
     throw new Error("Location coordinates are required");
   }
 
-  const response = await fetch(
-    `https://api.tomorrow.io/v4/weather/realtime?location=${latitude},${longitude}&apikey=${WEATHER_API_KEY}&units=imperial`,
-    { method: 'GET' }
-  );
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to fetch current weather');
-  }
-  
-  const data = await response.json();
-  return data.data;
+  const res = await callWeatherFunction({ latitude, longitude, request_type: 'current' });
+  return res.data;
 };
 
 // Fetch daily forecast
@@ -27,18 +38,8 @@ export const fetchDailyForecast = async (latitude, longitude, days = 7) => {
     throw new Error("Location coordinates are required");
   }
 
-  const response = await fetch(
-    `https://api.tomorrow.io/v4/weather/forecast?location=${latitude},${longitude}&timesteps=1d&units=imperial&apikey=${WEATHER_API_KEY}`,
-    { method: 'GET' }
-  );
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to fetch forecast');
-  }
-  
-  const data = await response.json();
-  return data.timelines?.daily || [];
+  const res = await callWeatherFunction({ latitude, longitude, request_type: 'forecast' });
+  return res.timelines?.daily || [];
 };
 
 // Fetch hourly forecast
@@ -47,18 +48,8 @@ export const fetchHourlyForecast = async (latitude, longitude, hours = 24) => {
     throw new Error("Location coordinates are required");
   }
 
-  const response = await fetch(
-    `https://api.tomorrow.io/v4/weather/forecast?location=${latitude},${longitude}&timesteps=1h&units=imperial&apikey=${WEATHER_API_KEY}`,
-    { method: 'GET' }
-  );
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to fetch hourly forecast');
-  }
-  
-  const data = await response.json();
-  return data.timelines?.hourly?.slice(0, hours) || [];
+  const res = await callWeatherFunction({ latitude, longitude, request_type: 'forecast' });
+  return res.timelines?.hourly?.slice(0, hours) || [];
 };
 
 // Get weather icon based on weather code
