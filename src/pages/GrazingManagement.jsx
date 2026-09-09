@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Loader2,
   Play,
-  Square
+  Square,
+  Hourglass
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,11 @@ function PastureCard({ pasture, grazingRecords, onStartGrazing, onEndGrazing }) 
   const activeGrazingRecord = grazingRecords.find(
     r => r.pasture_id === pasture.id && !r.end_date
   );
+
+  // Carrying capacity estimate: rule of thumb — 1 acre supports ~2 animal units for 30 days
+  const grazingDaysRemaining = activeGrazingRecord?.animal_count && pasture.acreage
+    ? Math.round((pasture.acreage * 60) / activeGrazingRecord.animal_count)
+    : null;
 
   const endGrazingMutation = useMutation({
     mutationFn: async () => {
@@ -103,6 +109,15 @@ function PastureCard({ pasture, grazingRecords, onStartGrazing, onEndGrazing }) 
             <CheckCircle className="w-4 h-4 text-gray-400" />
             <span className="text-gray-600">Rest period: {restPeriod} days</span>
           </div>
+          {grazingDaysRemaining !== null && (
+            <div className="flex items-center gap-1.5">
+              <Hourglass className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-600">
+                ≈ {grazingDaysRemaining} day{grazingDaysRemaining !== 1 ? 's' : ''} of grazing remaining
+                <span className="text-gray-400 text-xs ml-1">(est.)</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {isOverdue && (
