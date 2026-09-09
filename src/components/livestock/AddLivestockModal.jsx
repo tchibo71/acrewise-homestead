@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import LivestockPhotoUpload from "@/components/livestock/LivestockPhotoUpload";
+import { ANIMAL_TYPES, PURPOSES } from "@/components/livestock/livestockConstants";
 
 const STEPS = [
   { id: 1, title: "Basic ID", icon: Tag, description: "Animal identification" },
@@ -243,16 +244,9 @@ export default function AddLivestockModal({ onClose }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="chicken">Chicken</SelectItem>
-                      <SelectItem value="goat">Goat</SelectItem>
-                      <SelectItem value="sheep">Sheep</SelectItem>
-                      <SelectItem value="pig">Pig</SelectItem>
-                      <SelectItem value="cow">Cow</SelectItem>
-                      <SelectItem value="rabbit">Rabbit</SelectItem>
-                      <SelectItem value="duck">Duck</SelectItem>
-                      <SelectItem value="turkey">Turkey</SelectItem>
-                      <SelectItem value="bee_hive">Bee Hive</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {ANIMAL_TYPES.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -444,13 +438,9 @@ export default function AddLivestockModal({ onClose }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="eggs">Eggs</SelectItem>
-                      <SelectItem value="meat">Meat</SelectItem>
-                      <SelectItem value="dairy">Dairy</SelectItem>
-                      <SelectItem value="breeding">Breeding</SelectItem>
-                      <SelectItem value="fiber">Fiber</SelectItem>
-                      <SelectItem value="pets">Pets</SelectItem>
-                      <SelectItem value="multiple">Multiple</SelectItem>
+                      {PURPOSES.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -10,6 +10,7 @@ import {
   Activity
 } from "lucide-react";
 import AnimalIcon from "@/components/livestock/AnimalIcon";
+import { ANIMAL_TYPE_LABELS, PURPOSE_LABELS } from "@/components/livestock/livestockConstants";
 
 const statusColors = {
   active: "bg-green-100 text-green-700 border-green-200",
@@ -35,7 +36,7 @@ export default function LivestockCard({ animal }) {
     if (animal.animal_type === 'other' && animal.animal_type_other) {
       return animal.animal_type_other;
     }
-    return animal.animal_type.replace(/_/g, ' ');
+    return ANIMAL_TYPE_LABELS[animal.animal_type] || animal.animal_type?.replace(/_/g, ' ');
   };
 
   return (
@@ -86,7 +87,7 @@ export default function LivestockCard({ animal }) {
           {animal.purpose && (
             <div className="flex items-center gap-2 text-gray-600">
               <Activity className="w-4 h-4" />
-              <span className="capitalize">{animal.purpose}</span>
+              <span>{PURPOSE_LABELS[animal.purpose] || animal.purpose}</span>
             </div>
           )}
         </div>

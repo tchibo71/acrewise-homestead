@@ -9,6 +9,9 @@ const animalEmojis = {
   rabbit: "🐰",
   duck: "🦆",
   turkey: "🦃",
+  horse: "🐴",
+  donkey: "🫏",
+  llama_alpaca: "🦙",
   bee_hive: "🐝",
 };
 

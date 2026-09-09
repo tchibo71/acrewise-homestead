@@ -13,6 +13,9 @@
         "rabbit",
         "duck",
         "turkey",
+        "horse",
+        "donkey",
+        "llama_alpaca",
         "bee_hive",
         "other"
       ],
@@ -99,9 +102,10 @@
         "breeding",
         "fiber",
         "pets",
+        "draft_work",
         "multiple"
       ],
-      "description": "Primary purpose"
+      "description": "Primary purpose \u2014 draft_work is used for farm labor such as plowing, hauling, or transport"
     },
     "insurance_policy_number": {
       "type": "string",

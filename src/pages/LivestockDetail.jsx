@@ -43,6 +43,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 
 import AnimalIcon from "../components/livestock/AnimalIcon";
+import { ANIMAL_TYPE_LABELS, PURPOSE_LABELS } from "../components/livestock/livestockConstants";
 
 const statusColors = {
   active: "bg-green-100 text-green-700 border-green-200",
@@ -254,8 +255,8 @@ export default function LivestockDetail() {
               )}
                 <div>
                   <CardTitle className="text-3xl">{animal.name_or_tag}</CardTitle>
-                  <p className="text-lg text-gray-600 capitalize mt-1">
-                    {animal.breed || animal.animal_type.replace(/_/g, ' ')}
+                  <p className="text-lg text-gray-600 mt-1">
+                    {animal.breed || ANIMAL_TYPE_LABELS[animal.animal_type] || animal.animal_type?.replace(/_/g, ' ')}
                   </p>
                   <div className="flex gap-2 mt-2">
                     <Badge className={statusColors[animal.status]}>
@@ -264,8 +265,8 @@ export default function LivestockDetail() {
                     <Badge variant="outline" className="capitalize">
                       {animal.gender}
                     </Badge>
-                    <Badge variant="outline" className="capitalize">
-                      {animal.purpose}
+                    <Badge variant="outline">
+                      {PURPOSE_LABELS[animal.purpose] || animal.purpose}
                     </Badge>
                   </div>
                 </div>
