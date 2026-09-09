@@ -30,6 +30,10 @@
       "type": "string",
       "description": "Breed of animal"
     },
+    "photo_url": {
+      "type": "string",
+      "description": "URL of the animal's primary photo"
+    },
     "gender": {
       "type": "string",
       "enum": [

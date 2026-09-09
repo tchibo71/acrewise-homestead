@@ -23,6 +23,7 @@ import {
   WifiOff
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import LivestockPhotoUpload from "@/components/livestock/LivestockPhotoUpload";
 
 const STEPS = [
   { id: 1, title: "Basic ID", icon: Tag, description: "Animal identification" },
@@ -34,6 +35,7 @@ export default function AddLivestockModal({ onClose }) {
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [validationError, setValidationError] = useState("");
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [formData, setFormData] = useState({
     // Step 1: Basic ID
     animal_type: "chicken",
@@ -144,7 +146,17 @@ export default function AddLivestockModal({ onClose }) {
       return;
     }
 
-    createMutation.mutate(formData);
+    let submitData = { ...formData };
+    if (selectedPhoto) {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedPhoto });
+        submitData.photo_url = file_url;
+      } catch (err) {
+        alert("Failed to upload photo. Please try again.");
+        return;
+      }
+    }
+    createMutation.mutate(submitData);
   };
 
   const handleSaveDraft = async () => {
@@ -291,6 +303,11 @@ export default function AddLivestockModal({ onClose }) {
                   </Select>
                 </div>
               </div>
+
+              <LivestockPhotoUpload
+                photoUrl={null}
+                onFileSelect={(file) => setSelectedPhoto(file)}
+              />
             </div>
           )}
 

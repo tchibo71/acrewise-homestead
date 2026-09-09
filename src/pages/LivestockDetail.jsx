@@ -238,7 +238,15 @@ export default function LivestockDetail() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
+              {animal.photo_url ? (
+                <img
+                  src={animal.photo_url}
+                  alt={animal.name_or_tag}
+                  className="w-24 h-24 rounded-xl object-cover border-2 border-blue-200 shadow-md"
+                />
+              ) : (
                 <AnimalIcon animal={animal} emojiClass="text-6xl" svgClass="w-16 h-16 text-blue-600" />
+              )}
                 <div>
                   <CardTitle className="text-3xl">{animal.name_or_tag}</CardTitle>
                   <p className="text-lg text-gray-600 capitalize mt-1">

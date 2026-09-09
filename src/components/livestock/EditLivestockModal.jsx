@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -9,10 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import LivestockPhotoUpload from "@/components/livestock/LivestockPhotoUpload";
 
 export default function EditLivestockModal({ animal, onClose }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(animal);
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   const { data: allAnimals = [] } = useQuery({
     queryKey: ['all-livestock'],
@@ -29,7 +30,7 @@ export default function EditLivestockModal({ animal, onClose }) {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const submitData = { ...formData };
     if (submitData.birth_weight) submitData.birth_weight = parseFloat(submitData.birth_weight);
@@ -40,6 +41,16 @@ export default function EditLivestockModal({ animal, onClose }) {
     // Ensure animal_type_other is only sent if animal_type is 'other'
     if (submitData.animal_type !== 'other') {
       submitData.animal_type_other = null;
+    }
+
+    if (selectedPhoto) {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: selectedPhoto });
+        submitData.photo_url = file_url;
+      } catch (err) {
+        alert("Failed to upload photo. Please try again.");
+        return;
+      }
     }
 
     mutation.mutate(submitData);
@@ -162,6 +173,11 @@ export default function EditLivestockModal({ animal, onClose }) {
                 </Select>
               </div>
             </div>
+
+            <LivestockPhotoUpload
+              photoUrl={formData.photo_url || null}
+              onFileSelect={(file) => setSelectedPhoto(file)}
+            />
           </div>
 
           <Separator />
