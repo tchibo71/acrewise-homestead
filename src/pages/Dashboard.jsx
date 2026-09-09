@@ -9,7 +9,8 @@ import {
   Leaf,
   Calendar,
   TrendingUp,
-  ListChecks
+  ListChecks,
+  AlertCircle
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,7 +57,7 @@ export default function Dashboard() {
     initialData: { isPro: false }
   });
 
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading, isError: userError } = useQuery({
     queryKey: ['current-user-dashboard'],
     queryFn: async () => {
       const isAuth = await base44.auth.isAuthenticated();
@@ -65,7 +66,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: checklists = [] } = useQuery({
+  const { data: checklists = [], isLoading: checklistsLoading, isError: checklistsError } = useQuery({
     queryKey: ['dashboard-checklists'],
     queryFn: async () => {
       const isAuthenticated = await base44.auth.isAuthenticated();
@@ -78,7 +79,7 @@ export default function Dashboard() {
     refetchOnMount: false, // Use cached data, refetch in background
   });
 
-  const { data: guides = [] } = useQuery({
+  const { data: guides = [], isLoading: guidesLoading, isError: guidesError } = useQuery({
     queryKey: ['guides'],
     queryFn: () => base44.entities.Guide.list(),
     staleTime: 24 * 60 * 60 * 1000, // 24 hours - static content
@@ -142,7 +143,12 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {checklists.length === 0 ? (
+              {checklistsError ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Failed to load tasks</span>
+                </div>
+              ) : checklistsLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-20" />
                   <Skeleton className="h-2 w-full" />
@@ -169,7 +175,12 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {guides.length === 0 ? (
+              {guidesError ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Failed to load guides</span>
+                </div>
+              ) : guidesLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-16" />
                   <Skeleton className="h-3 w-32" />
@@ -194,7 +205,12 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {checklists.length === 0 ? (
+              {checklistsError ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">Failed to load tasks</span>
+                </div>
+              ) : checklistsLoading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-12" />
                   <Skeleton className="h-3 w-28" />
