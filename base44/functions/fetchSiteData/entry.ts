@@ -172,20 +172,27 @@ async function fetchAcreage(base44, address, lat, lon) {
   if (!address) return null;
   try {
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Search for the parcel or property acreage for this address: "${address}". Look for county assessor, property records, GIS parcel data, or real estate listing data. Return ONLY the total acreage as a number. If you cannot find reliable data, return acreage as 0. Do not guess or estimate.`,
+      prompt: `Search for property records for this address: "${address}". Look for county assessor, GIS parcel data, or real estate listing data. Return:
+1. acreage: the total acreage of the parcel as a number (0 if not found)
+2. parcel_number: the parcel/plat number, tax ID, or map number (empty string if not found)
+Do not guess or estimate.`,
       add_context_from_internet: true,
       model: "gemini_3_flash",
       response_json_schema: {
         type: "object",
         properties: {
-          acreage: { type: "number" }
+          acreage: { type: "number" },
+          parcel_number: { type: "string" }
         }
       }
     });
-    if (result && typeof result.acreage === "number" && result.acreage > 0) {
-      return { total_acreage: result.acreage };
-    }
-    return null;
+    const acreage = (result && typeof result.acreage === "number" && result.acreage > 0) ? result.acreage : null;
+    const parcelNumber = (result && typeof result.parcel_number === "string" && result.parcel_number.trim()) ? result.parcel_number.trim() : null;
+    if (acreage == null && parcelNumber == null) return null;
+    const out = {};
+    if (acreage != null) out.total_acreage = acreage;
+    if (parcelNumber) out.parcel_number = parcelNumber;
+    return out;
   } catch (e) {
     return null;
   }

@@ -137,6 +137,7 @@ export default function SiteDataCard({ profile, propertyMap, onSave }) {
         hardiness_zone: results.hardiness_zone?.hardiness_zone ?? null,
         wetlands_present: results.wetlands?.wetlands_present ?? null,
         total_acreage: results.acreage?.total_acreage ?? null,
+        plat_map_number: results.acreage?.parcel_number ?? null,
         site_data_fetched_date: new Date().toISOString().split("T")[0],
       };
 

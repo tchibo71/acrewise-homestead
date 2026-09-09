@@ -106,10 +106,19 @@ export default function FarmProfile() {
 
   const saveMutation = useMutation({
     mutationFn: async (data) => {
+      // Sanitize numeric fields — empty strings cause validation errors
+      const sanitized = { ...data };
+      ['total_acreage', 'usable_acreage'].forEach(field => {
+        if (sanitized[field] === "" || sanitized[field] === undefined) {
+          delete sanitized[field];
+        } else if (typeof sanitized[field] === "string") {
+          sanitized[field] = Number(sanitized[field]);
+        }
+      });
       if (profile) {
-        return await base44.entities.FarmProfile.update(profile.id, data);
+        return await base44.entities.FarmProfile.update(profile.id, sanitized);
       } else {
-        return await base44.entities.FarmProfile.create(data);
+        return await base44.entities.FarmProfile.create(sanitized);
       }
     },
     onSuccess: () => {
@@ -154,6 +163,12 @@ export default function FarmProfile() {
         hardiness_zone: data.hardiness_zone?.hardiness_zone ?? formData.hardiness_zone,
         wetlands_present: data.wetlands?.wetlands_present ?? formData.wetlands_present,
         total_acreage: data.acreage?.total_acreage ?? formData.total_acreage,
+        plat_map_number: data.acreage?.parcel_number ?? formData.plat_map_number,
+        soil_types: data.soil_series?.soil_series
+          ? (formData.soil_types.some(s => s.soil_type === data.soil_series.soil_series)
+            ? formData.soil_types
+            : [...formData.soil_types, { soil_type: data.soil_series.soil_series, location: "", depth: "", acreage: "" }])
+          : formData.soil_types,
         site_data_fetched_date: new Date().toISOString().split("T")[0],
         ai_recommendations: aiRecommendations,
         last_updated: new Date().toISOString().split("T")[0],
@@ -234,11 +249,17 @@ Format as clear, numbered sections with specific actionable advice.`;
   };
 
   const handleSaveSiteData = async (siteData) => {
+    // Add soil series to soil_types array if not already present
+    let updatedSoilTypes = formData.soil_types;
+    if (siteData.soil_series && !formData.soil_types.some(s => s.soil_type === siteData.soil_series)) {
+      updatedSoilTypes = [...formData.soil_types, { soil_type: siteData.soil_series, location: "", depth: "", acreage: "" }];
+    }
     // Update form state immediately so fields populate without waiting for refetch
-    setFormData(prev => ({ ...prev, ...siteData }));
+    setFormData(prev => ({ ...prev, ...siteData, soil_types: updatedSoilTypes }));
     await saveMutation.mutateAsync({
       ...formData,
       ...siteData,
+      soil_types: updatedSoilTypes,
       ai_recommendations: aiRecommendations,
       last_updated: new Date().toISOString().split('T')[0]
     });
