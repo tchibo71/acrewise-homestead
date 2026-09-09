@@ -18,6 +18,10 @@
       "type": "string",
       "description": "Legal plat/parcel number"
     },
+    "usda_zone": {
+      "type": "string",
+      "description": "USDA hardiness zone (e.g., 7a, 7b, 8a)"
+    },
     "total_acreage": {
       "type": "number",
       "description": "Total farm acreage"

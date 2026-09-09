@@ -87,6 +87,11 @@ const navigationItems = [
     icon: Cloud,
   },
   {
+    title: "What to Plant Now",
+    url: createPageUrl("WhatToPlantNow"),
+    icon: Sprout,
+  },
+  {
     title: "Property Map",
     url: createPageUrl("PropertyMap"),
     icon: Map,

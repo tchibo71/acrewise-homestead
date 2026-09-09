@@ -82,6 +82,7 @@ import PropertyMap from './pages/PropertyMap';
 import ReferralProgram from './pages/ReferralProgram';
 import UserSettings from './pages/UserSettings';
 import WeatherDashboard from './pages/WeatherDashboard';
+import WhatToPlantNow from './pages/WhatToPlantNow';
 import __Layout from './Layout.jsx';
 
 
@@ -121,6 +122,7 @@ export const PAGES = {
     "ReferralProgram": ReferralProgram,
     "UserSettings": UserSettings,
     "WeatherDashboard": WeatherDashboard,
+    "WhatToPlantNow": WhatToPlantNow,
 }
 
 export const pagesConfig = {
