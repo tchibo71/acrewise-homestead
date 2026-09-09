@@ -338,6 +338,24 @@ export default function AIScenarioAnalysis() {
     refetchOnWindowFocus: false,
   });
 
+  const { data: infrastructureList = [] } = useQuery({
+    queryKey: ['ai-context-infrastructure'],
+    queryFn: () => base44.entities.Infrastructure.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: waterResourceList = [] } = useQuery({
+    queryKey: ['ai-context-water'],
+    queryFn: () => base44.entities.WaterResource.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: inventoryList = [] } = useQuery({
     queryKey: ['ai-context-inventory'],
     queryFn: () => base44.entities.InventoryItem.list(),
@@ -378,6 +396,22 @@ export default function AIScenarioAnalysis() {
       parts.push(equipSummary);
     }
 
+    // Infrastructure: type and condition
+    if (infrastructureList.length > 0) {
+      const infraSummary = infrastructureList
+        .map(i => `${i.type || i.name || 'structure'} (${i.condition || 'unknown'} condition)`)
+        .join(', ');
+      parts.push(infraSummary);
+    }
+
+    // Water resources: type and capacity
+    if (waterResourceList.length > 0) {
+      const waterSummary = waterResourceList
+        .map(w => `${w.source_type || w.name || 'water source'}${w.capacity ? ` (${w.capacity})` : ''}`)
+        .join(', ');
+      parts.push(waterSummary);
+    }
+
     // Inventory: flag low-stock items
     const lowStock = inventoryList.filter(
       item => item.current_quantity != null && item.minimum_quantity != null && item.current_quantity <= item.minimum_quantity
@@ -392,7 +426,7 @@ export default function AIScenarioAnalysis() {
     }
 
     return parts.length > 0 ? parts.join('; ') : 'No farm data available';
-  }, [livestockList, pastureList, equipmentList, inventoryList, farmProfile]);
+  }, [livestockList, pastureList, equipmentList, infrastructureList, waterResourceList, inventoryList, farmProfile]);
 
   const proceedWithGeneration = async (overrodeWarning) => {
     setGenerating(true);
@@ -458,116 +492,74 @@ This analysis is for informational purposes only and does not constitute legal a
         return;
       }
 
-      // Use LLM ONLY for keyword extraction and template matching (minimal tokens)
-      const matchingPrompt = `Extract 5-10 keywords from this scenario for template matching. Return ONLY a JSON object.
-
-Scenario: "${title} - ${scenario}"
-
-Farm context (the user's actual operation — ground all recommendations in this): ${farmContext}
-
-Return JSON format:
-{
-  "keywords": ["keyword1", "keyword2"],
-  "category": "one of: livestock_health, livestock_breeding, livestock_nutrition, predator_control, pest_management, crop_disease, crop_planning, soil_health, water_management, infrastructure, equipment, financial, weather_emergency, processing_butchering, fermentation, dairy, poultry, general",
-  "animal_type": "if applicable: chicken, goat, cow, pig, sheep, rabbit, duck, turkey, bee_hive, or null",
-  "priority": "low, medium, high, or critical"
-}`;
-
-      const matchResult = await base44.integrations.Core.InvokeLLM({
-        prompt: matchingPrompt,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            keywords: { type: "array", items: { type: "string" } },
-            category: { type: "string" },
-            animal_type: { type: "string" },
-            priority: { type: "string" }
+      // Score templates against the scenario text to select 2-3 as reference guidance
+      const scenarioLower = `${title} ${scenario}`.toLowerCase();
+      const scoredTemplates = templates
+        .map(template => {
+          let score = 0;
+          // Keyword overlap with scenario text
+          const matchedKeywords = (template.keywords || []).filter(kw =>
+            scenarioLower.includes(kw.toLowerCase())
+          );
+          score += matchedKeywords.length * 3;
+          // Animal type match from scenario text
+          if (template.animal_types && template.animal_types.some(at => scenarioLower.includes(at.toLowerCase()))) {
+            score += 5;
           }
-        }
+          return { template, score };
+        })
+        .filter(s => s.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+
+      const referenceGuidance = scoredTemplates.length > 0
+        ? scoredTemplates.map(({ template, score }, idx) => {
+            const steps = template.steps?.length > 0
+              ? `\n  Steps: ${template.steps.map(s => `${s.step_number}. ${s.title}: ${s.description}`).join('; ')}`
+              : '';
+            const warnings = template.warnings?.length > 0
+              ? `\n  Warnings: ${template.warnings.join('; ')}`
+              : '';
+            const whenVet = template.when_to_call_vet
+              ? `\n  When to seek professional help: ${template.when_to_call_vet}`
+              : '';
+            return `Reference ${idx + 1} (relevance score ${score}): "${template.title}" (category: ${template.category})\n  ${template.advice_content}${steps}${warnings}${whenVet}`;
+          }).join('\n\n')
+        : 'No closely matching reference templates found.';
+
+      const generationPrompt = `You are an expert homesteading and farming advisor. A user has submitted a scenario for analysis. Your job is to respond DIRECTLY and SPECIFICALLY to what the user actually described — not to give generic category-level advice.
+
+## USER'S SCENARIO (verbatim)
+
+Title: ${title}
+
+Description:
+${scenario}
+
+## USER'S ACTUAL FARM CONTEXT (ground your advice in this real data)
+${farmContext}
+
+## REFERENCE GUIDANCE
+The following are pre-written advice templates from our knowledge base that may be relevant. You may draw from them, but you are NOT limited to this — respond specifically to what the user actually described. Do not copy a template verbatim if it doesn't address the user's specific situation.
+
+${referenceGuidance}
+
+## INSTRUCTIONS
+- Respond directly and specifically to EVERY concrete detail in the scenario description. If the user mentioned specific numbers (stall counts, animal counts, acreage), specific structures (barns, coops, fences, waterers), or named problems, REFERENCE THOSE by name in your response.
+- Do NOT give generic category-level advice if the user provided specifics. Tailor every recommendation to their actual situation.
+- If uploaded photos/screenshots are provided, examine them carefully and incorporate what you see into your analysis.
+- Structure your response in clear markdown with headers (## for sections, ### for subsections).
+- Include: a specific assessment of their situation, concrete step-by-step actions tailored to their details, warnings relevant to their specific case, when to seek professional help, estimated costs if applicable, and a realistic timeline.
+- Be thorough but practical. The user is a real homesteader dealing with a real problem — give them actionable, specific guidance they can use today.`;
+
+      const fileUrls = uploadedFiles.map(f => f.url).filter(Boolean);
+
+      const llmResponse = await base44.integrations.Core.InvokeLLM({
+        prompt: generationPrompt,
+        file_urls: fileUrls.length > 0 ? fileUrls : undefined,
       });
 
-      // Find best matching template
-      let bestMatch = null;
-      let bestScore = 0;
-
-      for (const template of templates) {
-        let score = 0;
-        
-        // Category match (high weight)
-        if (template.category === matchResult.category) score += 10;
-        
-        // Keyword matches
-        const matchedKeywords = matchResult.keywords.filter(kw => 
-          template.keywords.some(tk => 
-            tk.toLowerCase().includes(kw.toLowerCase()) || 
-            kw.toLowerCase().includes(tk.toLowerCase())
-          )
-        );
-        score += matchedKeywords.length * 3;
-
-        // Animal type match
-        if (matchResult.animal_type && template.animal_types?.includes(matchResult.animal_type)) {
-          score += 5;
-        }
-
-        if (score > bestScore) {
-          bestScore = score;
-          bestMatch = template;
-        }
-      }
-
-      // Build response from template or fallback
-      let finalAdvice;
-      if (bestMatch && bestScore >= 5) {
-        // Use template content
-        finalAdvice = `## ${bestMatch.title}
-
-${bestMatch.advice_content}
-
-${bestMatch.steps?.length > 0 ? `### Step-by-Step Instructions
-${bestMatch.steps.map(s => `**${s.step_number}. ${s.title}**\n${s.description}`).join('\n\n')}` : ''}
-
-${bestMatch.warnings?.length > 0 ? `### ⚠️ Important Warnings
-${bestMatch.warnings.map(w => `- ${w}`).join('\n')}` : ''}
-
-${bestMatch.when_to_call_vet ? `### When to Seek Professional Help
-${bestMatch.when_to_call_vet}` : ''}
-
-${bestMatch.estimated_cost_range ? `### Estimated Cost Range
-${bestMatch.estimated_cost_range}` : ''}
-
-${bestMatch.time_to_resolution ? `### Expected Timeline
-${bestMatch.time_to_resolution}` : ''}
-
----
-*Template: ${bestMatch.template_id} | Category: ${bestMatch.category}*`;
-      } else {
-        // No good match - provide generic response
-        finalAdvice = `## Analysis: ${title}
-
-### Summary
-Based on your scenario description, we've identified this as a **${matchResult.category.replace(/_/g, ' ')}** issue${matchResult.animal_type ? ` related to **${matchResult.animal_type}**` : ''}.
-
-### General Recommendations
-1. **Assess the Situation** - Document all relevant details including timing, symptoms, and environmental factors
-2. **Research Local Resources** - Contact your local agricultural extension office for region-specific guidance
-3. **Consult Professionals** - For health-related issues, consult a licensed veterinarian; for legal matters, consult an attorney
-4. **Document Everything** - Keep detailed records for future reference and pattern identification
-
-### Keywords Identified
-${matchResult.keywords.map(k => `- ${k}`).join('\n')}
-
-### Priority Level
-**${matchResult.priority?.toUpperCase() || 'MEDIUM'}**
-
-### Next Steps
-- Review relevant guides in our library for more detailed information
-- Consider posting in the community forum for peer advice
-- Contact appropriate professionals if situation is urgent
-
----
-*Note: No specific template matched your scenario. Consider refining your description or consulting our guides library.*`;
-      }
+      const finalAdvice = typeof llmResponse === 'string' ? llmResponse : JSON.stringify(llmResponse);
 
       const expiresDate = new Date();
       expiresDate.setDate(expiresDate.getDate() + 10);
@@ -580,7 +572,7 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
         contains_criminal_warning: false,
         user_overrode_warning: false,
         expires_date: expiresDate.toISOString().split('T')[0],
-        tags: matchResult.keywords || []
+        tags: []
       };
 
       await createAnalysisMutation.mutateAsync(analysisData);
