@@ -22,6 +22,7 @@ const SeasonalGuide = lazy(() => import("../components/dashboard/SeasonalGuide")
 const QuickActions = lazy(() => import("../components/dashboard/QuickActions"));
 const FarmActivityFeed = lazy(() => import("@/components/dashboard/FarmActivityFeed"));
 const WeatherWidget = lazy(() => import("../components/dashboard/WeatherWidget"));
+const WeatherAlertBanner = lazy(() => import("@/components/dashboard/WeatherAlertBanner"));
 const SmartReorderAlert = lazy(() => import("../components/dashboard/SmartReorderAlert"));
 const TeamCollaboration = lazy(() => import("../components/dashboard/TeamCollaboration"));
 
@@ -126,6 +127,11 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
+
+        {/* Weather Alert Banner — frost, heavy rain, high wind advisories */}
+        <Suspense fallback={null}>
+          <WeatherAlertBanner />
+        </Suspense>
 
         {/* Farm Health Score - visible to all users */}
         <FarmHealthScore />

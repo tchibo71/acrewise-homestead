@@ -37,7 +37,8 @@ import {
   getWeatherIcon, // Using directly, not aliased
   getWeatherDescription,
   getPrecipitationType,
-  getHomesteadRecommendations
+  getHomesteadRecommendations,
+  getWeatherRecommendations
 } from "@/components/utils/weatherUtils";
 import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 
@@ -404,6 +405,8 @@ export default function WeatherDashboard() {
 
   // Pass user object to getHomesteadRecommendations for frost_alert_threshold
   const recommendations = weatherData ? getHomesteadRecommendations(weatherData, user) : [];
+  // Forecast-based actionable recommendations (frost, heavy rain, high wind)
+  const forecastAlerts = forecastData ? getWeatherRecommendations(forecastData, user) : [];
   const precipInfo = weatherData ? getPrecipitationType(weatherData.values.weatherCode) : null;
   const PrecipIcon = precipInfo ? iconComponents[precipInfo.icon] || CloudRain : CloudRain; // Get dynamic icon component for precipitation
 
@@ -459,6 +462,40 @@ export default function WeatherDashboard() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Weather Alerts Banner — frost, heavy rain, high wind from forecast */}
+        {forecastAlerts.length > 0 && (
+          <div className="space-y-2">
+            {forecastAlerts.map((alert, idx) => {
+              const isCritical = alert.severity === 'critical';
+              const isWarning = alert.severity === 'warning';
+              return (
+                <div
+                  key={idx}
+                  className={`flex items-start gap-3 p-4 rounded-lg border-2 ${
+                    isCritical ? 'bg-red-50 border-red-300' :
+                    isWarning ? 'bg-orange-50 border-orange-300' :
+                    'bg-blue-50 border-blue-300'
+                  }`}
+                >
+                  <AlertTriangle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                    isCritical ? 'text-red-600' :
+                    isWarning ? 'text-orange-600' : 'text-blue-600'
+                  }`} />
+                  <div>
+                    <p className={`text-sm font-bold uppercase tracking-wide ${
+                      isCritical ? 'text-red-900' :
+                      isWarning ? 'text-orange-900' : 'text-blue-900'
+                    }`}>
+                      {isCritical ? 'Critical Alert' : isWarning ? 'Weather Advisory' : 'Weather Info'}
+                    </p>
+                    <p className="text-sm text-gray-700 mt-1">{alert.message}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
 
         {/* Live Weather Radar — always visible above tabs */}

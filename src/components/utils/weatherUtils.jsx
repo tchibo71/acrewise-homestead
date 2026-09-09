@@ -260,6 +260,62 @@ export const getPrecipitationType = (code) => {
   return { type: "None", color: "text-gray-400", icon: "Cloud" };
 };
 
+// Generate actionable weather recommendations from forecast data.
+// forecast: array returned by fetchDailyForecast (each item: { time, values: { temperatureMin, temperatureMax, precipitationProbabilityAvg, precipitationIntensityAvg, windSpeedAvg, weatherCodeMax } })
+// userSettings: the user object (uses frost_alert_threshold, defaults to 32)
+// Returns array of { severity: 'info'|'warning'|'critical', message }
+export const getWeatherRecommendations = (forecast, userSettings) => {
+  if (!forecast || !Array.isArray(forecast) || forecast.length === 0) return [];
+
+  const recommendations = [];
+  const frostThreshold = userSettings?.frost_alert_threshold ?? 32;
+
+  // Look at the next 48 hours (first 2 forecast days)
+  const next48 = forecast.slice(0, 2);
+
+  // Frost risk: any low at or below threshold in next 48h
+  const frostDays = next48.filter(day => day.values?.temperatureMin != null && day.values.temperatureMin <= frostThreshold);
+  if (frostDays.length > 0) {
+    const worst = frostDays.reduce((min, d) => d.values.temperatureMin < min.values.temperatureMin ? d : min);
+    const severity = worst.values.temperatureMin <= frostThreshold - 4 ? 'critical' : 'warning';
+    recommendations.push({
+      severity,
+      message: `Frost expected — low of ${Math.round(worst.values.temperatureMin)}°F (threshold ${frostThreshold}°F). Cover tender plants, check livestock water, and protect sensitive crops.`,
+    });
+  }
+
+  // Heavy rain: any day in next 48h with significant precipitation
+  const heavyRainDays = next48.filter(day =>
+    (day.values?.precipitationIntensityAvg != null && day.values.precipitationIntensityAvg >= 0.5) ||
+    (day.values?.precipitationProbabilityAvg != null && day.values.precipitationProbabilityAvg >= 70)
+  );
+  if (heavyRainDays.length > 0) {
+    const worst = heavyRainDays.reduce((max, d) =>
+      (d.values.precipitationIntensityAvg || 0) > (max.values.precipitationIntensityAvg || 0) ? d : max
+    );
+    const inches = (worst.values.precipitationIntensityAvg || 0).toFixed(2);
+    recommendations.push({
+      severity: 'warning',
+      message: `Heavy rain expected (${inches}" forecast, ${Math.round(worst.values.precipitationProbabilityAvg || 0)}% chance). Delay irrigation, check pasture drainage, and protect harvested crops.`,
+    });
+  }
+
+  // High wind: any day in next 48h with strong winds
+  const highWindDays = next48.filter(day => day.values?.windSpeedAvg != null && day.values.windSpeedAvg >= 20);
+  if (highWindDays.length > 0) {
+    const worst = highWindDays.reduce((max, d) => d.values.windSpeedAvg > max.values.windSpeedAvg ? d : max);
+    const severity = worst.values.windSpeedAvg >= 30 ? 'critical' : 'warning';
+    recommendations.push({
+      severity,
+      message: `High winds forecast — gusts up to ${Math.round(worst.values.windSpeedAvg)} mph. Delay spraying, secure loose equipment, and check fences.`,
+    });
+  }
+
+  // Sort by severity: critical first, then warning, then info
+  const order = { critical: 0, warning: 1, info: 2 };
+  return recommendations.sort((a, b) => order[a.severity] - order[b.severity]);
+};
+
 // Generate homestead recommendations based on weather
 export const getHomesteadRecommendations = (weatherData, user) => {
   if (!weatherData || !weatherData.values) return [];
