@@ -14,33 +14,13 @@ export async function checkSubscription() {
     }
 
     const subs = await base44.entities.Subscription.filter({ created_by: user.email });
-    
-    if (subs.length === 0) {
-      return { isPro: false, plan: "free", status: "none" };
-    }
-
     const subscription = subs[0];
-    
-    // Check if subscription is active
-    if (subscription.status === "active" && subscription.end_date) {
-      const endDate = new Date(subscription.end_date);
-      const now = new Date();
-      
-      if (endDate < now) {
-        // Subscription expired
-        return { isPro: false, plan: subscription.plan, status: "expired", subscription };
-      }
-    }
+    const isTeamPlan = subscription ? (subscription.plan === "team_monthly" || subscription.plan === "team_yearly") : false;
 
-    const isPro = subscription.status === "active" && 
-                  (subscription.plan === "monthly" || subscription.plan === "yearly" || 
-                   subscription.plan === "team_monthly" || subscription.plan === "team_yearly");
-
-    const isTeamPlan = subscription.plan === "team_monthly" || subscription.plan === "team_yearly";
-
-    return { isPro, plan: subscription.plan, status: subscription.status, subscription, isTeamPlan };
+    // PAYWALL DISABLED INDEFINITELY — all authenticated users have full Pro access.
+    return { isPro: true, plan: subscription?.plan || "free", status: subscription?.status || "none", subscription, isTeamPlan };
   } catch (error) {
-    return { isPro: false, plan: "free", status: "error" };
+    return { isPro: true, plan: "free", status: "error" };
   }
 }
 
