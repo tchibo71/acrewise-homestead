@@ -1,29 +1,105 @@
 // Centralized weather utility functions
-import { appParams } from "@/lib/app-params";
+// Uses Open-Meteo — free, no API key, no sign-up, CORS-supported.
+// Data is fetched directly from the browser; no backend function needed.
+// Open-Meteo provides current, hourly (up to 16 days), and daily forecasts
+// from 30+ weather models including NOAA HRRR for the US.
 
-// Call the getWeather backend function (API key stays server-side)
-// Read token dynamically from localStorage — appParams.token may be stale if
-// the SDK client was initialized before the auth token was stored.
-const callWeatherFunction = async (payload) => {
-  const token = (typeof window !== 'undefined' && localStorage.getItem('base44_access_token')) || appParams.token;
-  const url = `${appParams.serverUrl}/api/apps/${appParams.appId}/functions/getWeather`;
-  const response = await fetch(url, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      'X-Origin-URL': window.location.href,
-    },
-    body: JSON.stringify(payload),
-  });
+const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast';
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Weather request failed (${response.status})`);
+// Module-level cache so the three fetch functions share a single API call
+let cachedResponse = null;
+let cachedLat = null;
+let cachedLng = null;
+let cachedAt = 0;
+const CACHE_TTL = 25 * 60 * 1000; // 25 minutes — matches React Query staleTime
+
+// Map WMO weather codes (Open-Meteo) → Tomorrow.io weather codes (used by the UI)
+// This lets us keep all existing icon/description/recommendation mappings unchanged.
+const wmoToTomorrowCode = (wmoCode) => {
+  const map = {
+    0: 1000,   // Clear sky → Clear
+    1: 1100,   // Mainly clear → Mostly Clear
+    2: 1101,   // Partly cloudy → Partly Cloudy
+    3: 1001,   // Overcast → Cloudy
+    45: 2000,  // Fog → Fog
+    48: 2100,  // Rime fog → Light Fog
+    51: 4000,  // Light drizzle → Drizzle
+    53: 4000,  // Moderate drizzle → Drizzle
+    55: 4000,  // Dense drizzle → Drizzle
+    56: 6000,  // Light freezing drizzle → Freezing Drizzle
+    57: 6000,  // Dense freezing drizzle → Freezing Drizzle
+    61: 4200,  // Slight rain → Light Rain
+    63: 4001,  // Moderate rain → Rain
+    65: 4201,  // Heavy rain → Heavy Rain
+    66: 6200,  // Light freezing rain → Light Freezing Rain
+    67: 6201,  // Heavy freezing rain → Heavy Freezing Rain
+    71: 5100,  // Slight snow → Light Snow
+    73: 5000,  // Moderate snow → Snow
+    75: 5101,  // Heavy snow → Heavy Snow
+    77: 5001,  // Snow grains → Flurries
+    80: 4200,  // Slight rain showers → Light Rain
+    81: 4001,  // Moderate rain showers → Rain
+    82: 4201,  // Violent rain showers → Heavy Rain
+    85: 5100,  // Slight snow showers → Light Snow
+    86: 5101,  // Heavy snow showers → Heavy Snow
+    95: 8000,  // Thunderstorm → Thunderstorm
+    96: 8000,  // Thunderstorm with slight hail → Thunderstorm
+    99: 8000,  // Thunderstorm with heavy hail → Thunderstorm
+  };
+  return map[wmoCode] ?? 1001; // Default to Cloudy
+};
+
+// Unit conversions
+const hPaToInHg = (hpa) => (hpa ? hpa * 0.02953 : 0);
+const metersToMiles = (meters) => (meters ? meters / 1609.34 : 10);
+
+// Fetch all weather data from Open-Meteo in a single call (cached for 25 min)
+const fetchOpenMeteo = async (latitude, longitude) => {
+  const now = Date.now();
+  if (cachedResponse && cachedLat == latitude && cachedLng == longitude && (now - cachedAt) < CACHE_TTL) {
+    return cachedResponse;
   }
 
-  return response.json();
+  const params = new URLSearchParams({
+    latitude: String(latitude),
+    longitude: String(longitude),
+    current: [
+      'temperature_2m', 'relative_humidity_2m', 'apparent_temperature', 'is_day',
+      'precipitation', 'weather_code', 'cloud_cover', 'pressure_msl',
+      'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m',
+      'visibility', 'uv_index', 'dew_point_2m',
+    ].join(','),
+    hourly: [
+      'temperature_2m', 'relative_humidity_2m', 'apparent_temperature',
+      'precipitation_probability', 'precipitation', 'weather_code',
+      'wind_speed_10m', 'wind_gusts_10m', 'visibility', 'uv_index', 'dew_point_2m',
+    ].join(','),
+    daily: [
+      'weather_code', 'temperature_2m_max', 'temperature_2m_min',
+      'sunrise', 'sunset', 'precipitation_sum', 'precipitation_probability_max',
+      'wind_speed_10m_max', 'uv_index_max',
+    ].join(','),
+    temperature_unit: 'fahrenheit',
+    wind_speed_unit: 'mph',
+    precipitation_unit: 'inch',
+    timezone: 'auto',
+    forecast_days: '7',
+  });
+
+  const response = await fetch(`${OPEN_METEO_URL}?${params.toString()}`);
+
+  if (!response.ok) {
+    throw new Error(`Weather request failed (${response.status})`);
+  }
+
+  const data = await response.json();
+
+  cachedResponse = data;
+  cachedLat = latitude;
+  cachedLng = longitude;
+  cachedAt = now;
+
+  return data;
 };
 
 // Fetch current weather conditions
@@ -32,8 +108,37 @@ export const fetchCurrentWeather = async (latitude, longitude) => {
     throw new Error("Location coordinates are required");
   }
 
-  const res = await callWeatherFunction({ latitude, longitude, request_type: 'current' });
-  return res.data;
+  const data = await fetchOpenMeteo(latitude, longitude);
+  const c = data.current;
+
+  // Open-Meteo doesn't provide precipitation_probability in the current block;
+  // look up the current hour's value from the hourly array.
+  const currentHourIdx = data.hourly?.time?.findIndex(
+    (t) => new Date(t).getTime() === new Date(c.time).getTime()
+  );
+  const precipProb = currentHourIdx >= 0
+    ? (data.hourly.precipitation_probability?.[currentHourIdx] || 0)
+    : 0;
+
+  return {
+    time: c.time,
+    values: {
+      weatherCode: wmoToTomorrowCode(c.weather_code),
+      temperature: c.temperature_2m,
+      temperatureApparent: c.apparent_temperature,
+      humidity: c.relative_humidity_2m,
+      dewPoint: c.dew_point_2m,
+      windSpeed: c.wind_speed_10m,
+      windGust: c.wind_gusts_10m,
+      windDirection: c.wind_direction_10m,
+      precipitationProbability: precipProb,
+      precipitationIntensity: c.precipitation,
+      pressureSeaLevel: hPaToInHg(c.pressure_msl),
+      visibility: metersToMiles(c.visibility),
+      cloudCover: c.cloud_cover,
+      uvIndex: c.uv_index,
+    },
+  };
 };
 
 // Fetch daily forecast
@@ -42,8 +147,23 @@ export const fetchDailyForecast = async (latitude, longitude, days = 7) => {
     throw new Error("Location coordinates are required");
   }
 
-  const res = await callWeatherFunction({ latitude, longitude, request_type: 'forecast' });
-  return res.timelines?.daily || [];
+  const data = await fetchOpenMeteo(latitude, longitude);
+  const d = data.daily;
+
+  return d.time.slice(0, days).map((dateStr, i) => ({
+    time: dateStr,
+    values: {
+      weatherCodeMax: wmoToTomorrowCode(d.weather_code[i]),
+      temperatureMax: d.temperature_2m_max[i],
+      temperatureMin: d.temperature_2m_min[i],
+      precipitationProbabilityAvg: d.precipitation_probability_max?.[i] || 0,
+      precipitationIntensityAvg: d.precipitation_sum?.[i] || 0,
+      windSpeedAvg: d.wind_speed_10m_max?.[i] || 0,
+      uvIndexMax: d.uv_index_max?.[i] || 0,
+      sunrise: d.sunrise?.[i],
+      sunset: d.sunset?.[i],
+    },
+  }));
 };
 
 // Fetch hourly forecast
@@ -52,8 +172,32 @@ export const fetchHourlyForecast = async (latitude, longitude, hours = 24) => {
     throw new Error("Location coordinates are required");
   }
 
-  const res = await callWeatherFunction({ latitude, longitude, request_type: 'forecast' });
-  return res.timelines?.hourly?.slice(0, hours) || [];
+  const data = await fetchOpenMeteo(latitude, longitude);
+  const h = data.hourly;
+
+  // Start from the current hour
+  const now = new Date();
+  const startIdx = h.time.findIndex((t) => new Date(t) >= now);
+  const beginIdx = startIdx >= 0 ? startIdx : 0;
+
+  return h.time.slice(beginIdx, beginIdx + hours).map((timeStr, j) => {
+    const i = beginIdx + j;
+    return {
+      time: timeStr,
+      values: {
+        weatherCode: wmoToTomorrowCode(h.weather_code[i]),
+        temperature: h.temperature_2m[i],
+        temperatureApparent: h.apparent_temperature[i],
+        precipitationProbability: h.precipitation_probability?.[i] || 0,
+        precipitationIntensity: h.precipitation?.[i] || 0,
+        humidity: h.relative_humidity_2m?.[i],
+        windSpeed: h.wind_speed_10m?.[i],
+        windGust: h.wind_gusts_10m?.[i],
+        uvIndex: h.uv_index?.[i],
+        visibility: metersToMiles(h.visibility?.[i]),
+      },
+    };
+  });
 };
 
 // Get weather icon based on weather code
