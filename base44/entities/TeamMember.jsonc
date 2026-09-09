@@ -1,0 +1,83 @@
+{
+  "name": "TeamMember",
+  "type": "object",
+  "properties": {
+    "member_email": {
+      "type": "string",
+      "description": "Email address of the team member"
+    },
+    "member_name": {
+      "type": "string",
+      "description": "Display name of the team member"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "family",
+        "farmhand",
+        "veterinarian",
+        "farrier",
+        "mechanic",
+        "contractor",
+        "accountant",
+        "consultant"
+      ],
+      "description": "Role this person plays on the farm"
+    },
+    "permissions": {
+      "type": "string",
+      "enum": [
+        "view_only",
+        "edit",
+        "full_access"
+      ],
+      "default": "view_only",
+      "description": "Permission level granted to this team member"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes about this team member"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "the farm owner this person works with"
+    }
+  },
+  "required": [
+    "member_email",
+    "role",
+    "team_owner_email"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
