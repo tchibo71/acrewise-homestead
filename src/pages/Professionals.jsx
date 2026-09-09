@@ -63,7 +63,7 @@ export default function Professionals() {
   const [showForm, setShowForm] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [visitModal, setVisitModal] = useState(null);
-  const [visitForm, setVisitForm] = useState({ title: "", description: "", financial_impact: "" });
+  const [visitForm, setVisitForm] = useState({ title: "", description: "", financial_impact: "", visit_date: new Date().toISOString().split("T")[0] });
   const [formData, setFormData] = useState({
     name: "",
     profession_type: "",
@@ -109,7 +109,7 @@ export default function Professionals() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['professionals'] });
       setVisitModal(null);
-      setVisitForm({ title: "", description: "", financial_impact: "" });
+      setVisitForm({ title: "", description: "", financial_impact: "", visit_date: new Date().toISOString().split("T")[0] });
       toast({ title: "Visit logged to farm history" });
     },
   });
@@ -141,13 +141,14 @@ export default function Professionals() {
       title: `Visit from ${prof.name}${prof.business_name ? ` (${prof.business_name})` : ""}`,
       description: "",
       financial_impact: "",
+      visit_date: new Date().toISOString().split("T")[0],
     });
   };
 
   const handleVisitSubmit = () => {
     if (!visitModal || !visitForm.title) return;
     const payload = {
-      event_date: new Date().toISOString().split("T")[0],
+      event_date: visitForm.visit_date || new Date().toISOString().split("T")[0],
       event_type: "professional_visit",
       title: visitForm.title,
       description: visitForm.description || undefined,
@@ -157,7 +158,7 @@ export default function Professionals() {
     visitMutation.mutate(payload);
 
     // Also update last_service_date on the professional
-    base44.entities.Professional.update(visitModal.id, { last_service_date: new Date().toISOString().split("T")[0] });
+    base44.entities.Professional.update(visitModal.id, { last_service_date: visitForm.visit_date || new Date().toISOString().split("T")[0] });
   };
 
   return (
@@ -417,6 +418,11 @@ export default function Professionals() {
                 <div className="space-y-2">
                   <Label>Visit Title *</Label>
                   <Input value={visitForm.title} onChange={(e) => setVisitForm({ ...visitForm, title: e.target.value })} className="bg-white" />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Visit Date *</Label>
+                  <Input type="date" value={visitForm.visit_date} onChange={(e) => setVisitForm({ ...visitForm, visit_date: e.target.value })} className="bg-white" />
                 </div>
 
                 <div className="space-y-2">
