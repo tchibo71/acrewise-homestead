@@ -39,6 +39,8 @@ const frostToleranceConfig = {
   "frost sensitive": { Icon: Flame, color: "bg-red-100 text-red-800 border-red-300" },
 };
 
+const isValid = (val) => val && val !== "null" && val !== "undefined" && val !== "";
+
 export default function PlantRecommendationCard({
   crop,
   onAddToPlan,
@@ -58,7 +60,9 @@ export default function PlantRecommendationCard({
     day: "numeric",
   });
 
-  const frostConfig = frostToleranceConfig[crop.frost_tolerance?.toLowerCase()];
+  const frostConfig = isValid(crop.frost_tolerance)
+    ? frostToleranceConfig[crop.frost_tolerance?.toLowerCase()]
+    : null;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -101,7 +105,7 @@ export default function PlantRecommendationCard({
               {crop.frost_tolerance}
             </Badge>
           )}
-          {crop.germination_days && (
+          {isValid(crop.germination_days) && (
             <Badge variant="outline" className="text-xs">
               <Clock className="w-3 h-3 mr-1" />
               Germinates in {crop.germination_days} days
@@ -196,7 +200,7 @@ export default function PlantRecommendationCard({
         )}
 
         {/* Second planting info */}
-        {crop.second_planting_possible && crop.second_planting_window && (
+        {crop.second_planting_possible === true && isValid(crop.second_planting_window) && (
           <div className="mb-3 p-2.5 bg-indigo-50 rounded-lg border border-indigo-200">
             <div className="flex items-center gap-1.5 mb-1">
               <Repeat className="w-3.5 h-3.5 text-indigo-600" />

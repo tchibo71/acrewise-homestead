@@ -1,10 +1,15 @@
 import React from "react";
 import { Home, Sun, Wind, ArrowRight } from "lucide-react";
 
+const isValid = (val) => val && val !== "null" && val !== "undefined" && val !== "";
+
 export default function PlantingSchedule({ crop }) {
-  const hasIndoorStart = crop.start_indoors_relative && crop.start_indoors_dates;
-  const hasDirectSow = crop.direct_sow_relative && crop.direct_sow_dates;
-  const hasTransplant = crop.transplant_relative && crop.transplant_dates;
+  const hasIndoorStart =
+    isValid(crop.start_indoors_relative) && isValid(crop.start_indoors_dates);
+  const hasDirectSow =
+    isValid(crop.direct_sow_relative) && isValid(crop.direct_sow_dates);
+  const hasTransplant =
+    isValid(crop.transplant_relative) && isValid(crop.transplant_dates);
   const hasHardening = crop.hardening_days && hasIndoorStart;
 
   if (!hasIndoorStart && !hasDirectSow && !hasTransplant) return null;
