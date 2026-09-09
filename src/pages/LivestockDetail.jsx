@@ -66,8 +66,9 @@ export default function LivestockDetail() {
   const { data: animal, isLoading: loadingAnimal } = useQuery({
     queryKey: ['livestock', livestockId],
     queryFn: async () => {
+      if (!livestockId) return null;
       const animals = await base44.entities.Livestock.list();
-      return animals.find(a => a.id === livestockId);
+      return animals.find(a => a.id === livestockId) ?? null;
     },
   });
 

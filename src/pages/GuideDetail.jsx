@@ -24,8 +24,9 @@ export default function GuideDetail() {
   const { data: guide, isLoading } = useQuery({
     queryKey: ['guide', guideId],
     queryFn: async () => {
+      if (!guideId) return null;
       const guides = await base44.entities.Guide.list();
-      return guides.find(g => g.id === guideId);
+      return guides.find(g => g.id === guideId) ?? null;
     },
   });
 

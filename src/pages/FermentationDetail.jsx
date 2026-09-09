@@ -68,8 +68,9 @@ export default function FermentationDetail() {
   const { data: batch, isLoading } = useQuery({
     queryKey: ['fermentation-batch', batchId],
     queryFn: async () => {
+      if (!batchId) return null;
       const batches = await base44.entities.FermentationBatch.list();
-      return batches.find(b => b.id === batchId);
+      return batches.find(b => b.id === batchId) ?? null;
     },
   });
 

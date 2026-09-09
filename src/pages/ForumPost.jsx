@@ -62,6 +62,7 @@ export default function ForumPost() {
   const { data: post, isLoading: loadingPost } = useQuery({
     queryKey: ['forum-post', postId],
     queryFn: async () => {
+      if (!postId) return null;
       const posts = await base44.entities.ForumPost.list();
       const foundPost = posts.find(p => p.id === postId);
       
@@ -72,7 +73,7 @@ export default function ForumPost() {
         });
       }
       
-      return foundPost;
+      return foundPost ?? null;
     },
   });
 
