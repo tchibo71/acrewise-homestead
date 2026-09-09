@@ -177,9 +177,29 @@ export default function FarmProfile() {
         total_acreage: data.acreage?.total_acreage ?? formData.total_acreage,
         plat_map_number: data.acreage?.parcel_number ?? formData.plat_map_number,
         soil_types: data.soil_series?.soil_series
-          ? (formData.soil_types.some(s => s.soil_type === data.soil_series.soil_series)
-            ? formData.soil_types
-            : [...formData.soil_types, { soil_type: data.soil_series.soil_series, location: "", depth: "", acreage: "" }])
+          ? (() => {
+              const seriesName = data.soil_series.soil_series;
+              const exists = formData.soil_types.some(s => s.soil_type === seriesName);
+              if (exists) {
+                // Update existing entry — fill in any empty fields with new data
+                return formData.soil_types.map(s =>
+                  s.soil_type === seriesName
+                    ? {
+                        ...s,
+                        location: s.location || data.soil_series?.location || "",
+                        depth: s.depth || data.soil_series?.depth || "",
+                        acreage: s.acreage || data.acreage?.total_acreage || ""
+                      }
+                    : s
+                );
+              }
+              return [...formData.soil_types, {
+                soil_type: seriesName,
+                location: data.soil_series?.location || "",
+                depth: data.soil_series?.depth || "",
+                acreage: data.acreage?.total_acreage || ""
+              }];
+            })()
           : formData.soil_types,
         site_data_fetched_date: new Date().toISOString().split("T")[0],
         ai_recommendations: aiRecommendations,
@@ -264,7 +284,12 @@ Format as clear, numbered sections with specific actionable advice.`;
     // Add soil series to soil_types array if not already present
     let updatedSoilTypes = formData.soil_types;
     if (siteData.soil_series && !formData.soil_types.some(s => s.soil_type === siteData.soil_series)) {
-      updatedSoilTypes = [...formData.soil_types, { soil_type: siteData.soil_series, location: "", depth: "", acreage: "" }];
+      updatedSoilTypes = [...formData.soil_types, {
+        soil_type: siteData.soil_series,
+        location: siteData.soil_location || "",
+        depth: siteData.soil_depth || "",
+        acreage: formData.total_acreage || ""
+      }];
     }
     // Update form state immediately so fields populate without waiting for refetch
     setFormData(prev => ({ ...prev, ...siteData, soil_types: updatedSoilTypes }));

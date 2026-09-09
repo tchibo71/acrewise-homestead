@@ -21,7 +21,7 @@ async function fetchWithTimeout(url, options, timeoutMs = 20000) {
   }
 }
 
-async function fetchSoilSeries(lat, lon) {
+async function fetchSoilSeries(lat, lon, formattedAddress) {
   try {
     const pointWkt = `POINT(${lon} ${lat})`;
     const mukeyQuery = `SELECT mukey FROM SDA_Get_Mukey_from_intersection_with_WktWgs84('${pointWkt}')`;
@@ -61,7 +61,41 @@ async function fetchSoilSeries(lat, lon) {
     const soilSeries = munameData.Table.map((row) => row[0]).filter(Boolean);
     if (!soilSeries.length) return null;
 
-    return { soil_series: soilSeries[0] };
+    // Fetch soil depth — deepest horizon bottom depth in cm, converted to inches
+    let depth = "";
+    try {
+      const depthQuery = `SELECT MAX(ch.hzdepb_r) FROM chorizon ch JOIN component co ON ch.cokey = co.cokey WHERE co.mukey IN (${mukeyList}) AND ch.hzdepb_r IS NOT NULL`;
+      const depthRes = await fetchWithTimeout(
+        "https://sdmdataaccess.sc.egov.usda.gov/tabular/post.rest",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: `format=json&query=${encodeURIComponent(depthQuery)}`,
+        }
+      );
+      if (depthRes.ok && depthRes.data) {
+        const depthData = JSON.parse(depthRes.data);
+        if (depthData?.Table?.length && depthData.Table[0]?.[0] != null) {
+          const depthCm = Number(depthData.Table[0][0]);
+          if (!isNaN(depthCm) && depthCm > 0) {
+            depth = `${Math.round(depthCm * 0.393701)}"`;
+          }
+        }
+      }
+    } catch (e) {
+      // Depth query failed — continue without it
+    }
+
+    // Extract county from formatted address for location
+    let location = "";
+    if (formattedAddress) {
+      const countyMatch = formattedAddress.match(/,\s*([^,]+?)\s+County,/i);
+      if (countyMatch) {
+        location = `${countyMatch[1]} County`;
+      }
+    }
+
+    return { soil_series: soilSeries[0], depth, location };
   } catch (e) {
     return null;
   }
@@ -280,7 +314,7 @@ export default async function (req) {
     }
 
     const [soil, flood, elevation, hardiness, wetlands, acreage] = await Promise.all([
-      fetchSoilSeries(lat, lon),
+      fetchSoilSeries(lat, lon, formattedAddress),
       fetchFloodZone(lat, lon),
       fetchElevation(lat, lon),
       fetchHardinessZone(zipCode),
