@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import { geocodeAddress } from "@/components/utils/mapboxConfig";
+import { fetchAllSiteData } from "@/components/utils/siteDataUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
 import PhotoAnalysisUploader from "@/components/farm-profile/PhotoAnalysisUploader";
 import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
@@ -68,7 +69,14 @@ export default function FarmProfile() {
     usable_acreage: "",
     soil_types: [],
     infrastructure: [],
-    water_sources: []
+    water_sources: [],
+    soil_series: "",
+    flood_zone: "",
+    is_in_floodplain: null,
+    elevation_ft: null,
+    hardiness_zone: "",
+    wetlands_present: null,
+    site_data_fetched_date: ""
   });
 
   useEffect(() => {
@@ -82,7 +90,14 @@ export default function FarmProfile() {
         usable_acreage: profile.usable_acreage || "",
         soil_types: profile.soil_types || [],
         infrastructure: profile.infrastructure || [],
-        water_sources: profile.water_sources || []
+        water_sources: profile.water_sources || [],
+        soil_series: profile.soil_series || "",
+        flood_zone: profile.flood_zone || "",
+        is_in_floodplain: profile.is_in_floodplain ?? null,
+        elevation_ft: profile.elevation_ft ?? null,
+        hardiness_zone: profile.hardiness_zone || "",
+        wetlands_present: profile.wetlands_present ?? null,
+        site_data_fetched_date: profile.site_data_fetched_date || ""
       });
       if (profile.ai_recommendations) {
         setAiRecommendations(profile.ai_recommendations);
@@ -114,42 +129,59 @@ export default function FarmProfile() {
     setGeocoding(true);
     try {
       const result = await geocodeAddress(formData.location_address);
-      
-      setFormData({
-        ...formData,
-        grid_coordinates: `${result.latitude.toFixed(6)}, ${result.longitude.toFixed(6)}`,
-        location_address: result.formatted_address
-      });
+      const lat = result.latitude;
+      const lng = result.longitude;
+      const formattedAddress = result.formatted_address;
+
+      setFormData(prev => ({
+        ...prev,
+        grid_coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+        location_address: formattedAddress
+      }));
 
       // Also update user's property location for weather
       await base44.auth.updateMe({
-        property_latitude: result.latitude,
-        property_longitude: result.longitude
+        property_latitude: lat,
+        property_longitude: lng
       });
 
       queryClient.invalidateQueries({ queryKey: ['current-user'] });
 
-      // Try to fetch property acreage using AI with web search
-      try {
-        const acreagePrompt = `Find the property size in acres for this address: ${result.formatted_address}. 
+      // Auto-fetch site data (soil, flood zone, elevation, hardiness, wetlands) in background
+      const zipMatch = formattedAddress.match(/\b(\d{5})(?:-\d{4})?\b/);
+      const zipCode = zipMatch ? zipMatch[1] : null;
+
+      fetchAllSiteData(lat, lng, zipCode).then(siteData => {
+        setFormData(prev => ({
+          ...prev,
+          soil_series: siteData.soil_series?.soil_series ?? prev.soil_series,
+          flood_zone: siteData.flood_zone?.flood_zone ?? prev.flood_zone,
+          is_in_floodplain: siteData.flood_zone?.is_in_floodplain ?? prev.is_in_floodplain,
+          elevation_ft: siteData.elevation?.elevation_ft ?? prev.elevation_ft,
+          hardiness_zone: siteData.hardiness_zone?.hardiness_zone ?? prev.hardiness_zone,
+          wetlands_present: siteData.wetlands?.wetlands_present ?? prev.wetlands_present,
+          site_data_fetched_date: new Date().toISOString().split('T')[0]
+        }));
+      }).catch(error => {
+        console.log("Could not auto-fetch site data:", error);
+      });
+
+      // Fire acreage lookup in background (non-blocking)
+      const acreagePrompt = `Find the property size in acres for this address: ${formattedAddress}. 
         Search public records, property listings, and county assessor data.
         Return ONLY the number of acres as a decimal number, nothing else. If you cannot find it, return "unknown".`;
-        
-        const acreageResult = await base44.integrations.Core.InvokeLLM({
-          prompt: acreagePrompt,
-          add_context_from_internet: true
-        });
 
+      base44.integrations.Core.InvokeLLM({
+        prompt: acreagePrompt,
+        add_context_from_internet: true
+      }).then(acreageResult => {
         const acres = parseFloat(acreageResult);
         if (!isNaN(acres) && acres > 0) {
-          setFormData(prev => ({
-            ...prev,
-            total_acreage: acres
-          }));
+          setFormData(prev => ({ ...prev, total_acreage: acres }));
         }
-      } catch (error) {
+      }).catch(error => {
         console.log("Could not auto-fetch acreage:", error);
-      }
+      });
 
     } catch (error) {
       alert(error.message || "Failed to geocode address");

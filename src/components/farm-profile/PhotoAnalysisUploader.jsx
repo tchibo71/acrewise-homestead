@@ -102,7 +102,6 @@ function buildReplaceData(extracted) {
 
 export default function PhotoAnalysisUploader({ formData, onApply }) {
   const [photos, setPhotos] = useState([]);
-  const [analyzing, setAnalyzing] = useState(false);
   const [extractedData, setExtractedData] = useState(null);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
@@ -132,7 +131,6 @@ export default function PhotoAnalysisUploader({ formData, onApply }) {
     mutationFn: async () => {
       if (photos.length === 0) throw new Error("Please upload at least one photo");
 
-      setAnalyzing(true);
       setError(null);
 
       // Upload all photos first
@@ -167,11 +165,9 @@ If the images are Google Maps or satellite screenshots, estimate acreage from sc
     },
     onSuccess: (data) => {
       setExtractedData(data);
-      setAnalyzing(false);
     },
     onError: (err) => {
       setError(err?.message || "Failed to analyze photos");
-      setAnalyzing(false);
     },
   });
 
@@ -248,10 +244,10 @@ If the images are Google Maps or satellite screenshots, estimate acreage from sc
           <Button
             type="button"
             onClick={() => analyzeMutation.mutate()}
-            disabled={analyzing}
+            disabled={analyzeMutation.isPending}
             className="w-full bg-blue-600 hover:bg-blue-700"
           >
-            {analyzing ? (
+            {analyzeMutation.isPending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Analyzing {photos.length} photo{photos.length > 1 ? 's' : ''}...
