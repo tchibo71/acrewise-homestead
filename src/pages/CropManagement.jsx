@@ -9,7 +9,8 @@ import {
   Edit,
   Trash2,
   Crown,
-  TrendingUp
+  TrendingUp,
+  ListChecks
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import AddSoilTestModal from "../components/farm-planning/AddSoilTestModal";
 import AddPestManagementModal from "../components/farm-planning/AddPestManagementModal";
 import ROIAnalytics from "../components/harvest/ROIAnalytics";
 import AddHarvestModal from "../components/harvest/AddHarvestModal";
+import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
 
 export default function CropManagement() {
   const [activeSection, setActiveSection] = useState("crops");
@@ -31,6 +33,10 @@ export default function CropManagement() {
   const [showHarvestModal, setShowHarvestModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [checklistRecommendations, setChecklistRecommendations] = useState("");
+  const [checklistSourceCategory, setChecklistSourceCategory] = useState("");
+  const [checklistSourceTitle, setChecklistSourceTitle] = useState("");
   const queryClient = useQueryClient();
 
   const { data: subscriptionData } = useQuery({
@@ -231,6 +237,10 @@ export default function CropManagement() {
                             <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded mt-2">
                               <p className="text-sm font-semibold text-purple-900 mb-1">AI Recommendations:</p>
                               <p className="text-sm text-purple-800">{crop.ai_recommendations}</p>
+                              <Button variant="ghost" size="sm" className="mt-2 text-green-700 hover:bg-green-100 p-0 h-auto" onClick={() => { setChecklistRecommendations(crop.ai_recommendations); setChecklistSourceCategory("gardening"); setChecklistSourceTitle(crop.crop_name); setShowChecklistModal(true); }}>
+                                <ListChecks className="w-4 h-4 mr-1" />
+                                Add to Checklist
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -295,6 +305,10 @@ export default function CropManagement() {
                             <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded mt-2">
                               <p className="text-sm font-semibold text-purple-900 mb-1">AI Analysis:</p>
                               <p className="text-sm text-purple-800">{test.ai_analysis}</p>
+                              <Button variant="ghost" size="sm" className="mt-2 text-green-700 hover:bg-green-100 p-0 h-auto" onClick={() => { setChecklistRecommendations(test.ai_analysis); setChecklistSourceCategory("composting"); setChecklistSourceTitle(test.location); setShowChecklistModal(true); }}>
+                                <ListChecks className="w-4 h-4 mr-1" />
+                                Add to Checklist
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -383,6 +397,10 @@ export default function CropManagement() {
                             <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded mt-2">
                               <p className="text-sm font-semibold text-purple-900 mb-1">AI Recommendations:</p>
                               <p className="text-sm text-purple-800">{record.ai_recommendations}</p>
+                              <Button variant="ghost" size="sm" className="mt-2 text-green-700 hover:bg-green-100 p-0 h-auto" onClick={() => { setChecklistRecommendations(record.ai_recommendations); setChecklistSourceCategory("gardening"); setChecklistSourceTitle(record.pest_name); setShowChecklistModal(true); }}>
+                                <ListChecks className="w-4 h-4 mr-1" />
+                                Add to Checklist
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -428,9 +446,17 @@ export default function CropManagement() {
           <AddHarvestModal
             harvest={editingItem}
             onClose={() => { setShowHarvestModal(false); setEditingItem(null); }}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
+            />
+            )}
+
+            <AddRecommendationsToChecklist
+            isOpen={showChecklistModal}
+            onClose={() => setShowChecklistModal(false)}
+            recommendationsText={checklistRecommendations}
+            sourceCategory={checklistSourceCategory}
+            sourceTitle={checklistSourceTitle}
+            />
+            </div>
+            </div>
+            );
+            }

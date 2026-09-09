@@ -16,12 +16,14 @@ import {
   CheckCircle2,
   Crown,
   Search,
-  Loader2
+  Loader2,
+  ListChecks
 } from "lucide-react";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import { geocodeAddress } from "@/components/utils/mapboxConfig";
 import PaywallModal from "../components/paywall/PaywallModal";
 import PhotoAnalysisUploader from "@/components/farm-profile/PhotoAnalysisUploader";
+import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
 
 export default function FarmProfile() {
   const queryClient = useQueryClient();
@@ -30,6 +32,7 @@ export default function FarmProfile() {
   const [aiRecommendations, setAiRecommendations] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
@@ -643,12 +646,23 @@ Format as clear, numbered sections with specific actionable advice.`;
             </CardHeader>
             <CardContent>
               {aiRecommendations ? (
-                <Textarea
-                  value={aiRecommendations}
-                  onChange={(e) => setAiRecommendations(e.target.value)}
-                  rows={15}
-                  className="font-mono text-sm"
-                />
+                <>
+                  <Textarea
+                    value={aiRecommendations}
+                    onChange={(e) => setAiRecommendations(e.target.value)}
+                    rows={15}
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => setShowChecklistModal(true)}
+                    className="mt-2 bg-green-600 hover:bg-green-700"
+                    size="sm"
+                  >
+                    <ListChecks className="w-4 h-4 mr-2" />
+                    Add Recommendations to Checklist
+                  </Button>
+                </>
               ) : (
                 <div className="text-center py-8">
                   <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-3" />
@@ -681,6 +695,14 @@ Format as clear, numbered sections with specific actionable advice.`;
             </Button>
           </div>
         </form>
+
+        <AddRecommendationsToChecklist
+          isOpen={showChecklistModal}
+          onClose={() => setShowChecklistModal(false)}
+          recommendationsText={aiRecommendations}
+          sourceCategory="property_engineering"
+          sourceTitle={formData.farm_name}
+        />
       </div>
     </div>
   );

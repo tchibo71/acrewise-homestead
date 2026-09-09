@@ -15,7 +15,8 @@ import {
   Shield,
   Brain,
   Camera,
-  X
+  X,
+  ListChecks
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { checkSubscription } from "@/components/utils/subscriptionUtils";
 import PaywallModal from "../components/paywall/PaywallModal";
 import { format } from "date-fns";
 import { uploadFileWithProgress } from "@/components/utils/uploadWithProgress";
+import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
 
 const TENNESSEE_DISCLAIMER = `COMPREHENSIVE LIABILITY DISCLAIMER AND TERMS OF USE
 
@@ -78,6 +80,9 @@ export default function AIScenarioAnalysis() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [showFirstTimeDisclaimer, setShowFirstTimeDisclaimer] = useState(false);
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [checklistRecommendations, setChecklistRecommendations] = useState("");
+  const [checklistSourceTitle, setChecklistSourceTitle] = useState("");
 
   const { data: subscriptionData } = useQuery({
     queryKey: ['subscription'],
@@ -1232,11 +1237,29 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
                     <Printer className="w-5 h-5 mr-2" />
                     Print Analysis
                   </Button>
+                  <Button
+                    onClick={() => {
+                      setChecklistRecommendations(selectedAnalysis.ai_analysis || "");
+                      setChecklistSourceTitle(selectedAnalysis.title || "");
+                      setShowChecklistModal(true);
+                    }}
+                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                  >
+                    <ListChecks className="w-5 h-5 mr-2" />
+                    Add to Checklist
+                  </Button>
                 </DialogFooter>
               </>
             )}
           </DialogContent>
         </Dialog>
+
+        <AddRecommendationsToChecklist
+          isOpen={showChecklistModal}
+          onClose={() => setShowChecklistModal(false)}
+          recommendationsText={checklistRecommendations}
+          sourceTitle={checklistSourceTitle}
+        />
       </div>
     </div>
   );
