@@ -29,6 +29,7 @@ import { checkSubscription } from "@/components/utils/subscriptionUtils";
 // import { printReport } from "@/components/utils/printHelpers"; // This import is no longer needed
 import PaywallModal from "../components/paywall/PaywallModal";
 import { format } from "date-fns";
+import { uploadFileWithProgress } from "@/components/utils/uploadWithProgress";
 
 const TENNESSEE_DISCLAIMER = `COMPREHENSIVE LIABILITY DISCLAIMER AND TERMS OF USE
 
@@ -69,6 +70,7 @@ export default function AIScenarioAnalysis() {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState([]); // [{name, progress, status}]
   const [generating, setGenerating] = useState(false);
   const [showWarningDialog, setShowWarningDialog] = useState(false);
   const [pendingAnalysis, setPendingAnalysis] = useState(null);
@@ -148,20 +150,56 @@ export default function AIScenarioAnalysis() {
 
     setUploading(true);
     setUploadError(null);
+
+    // Add progress entries for each file
+    const progressEntries = files.map(f => ({ name: f.name, progress: 0, status: "uploading" }));
+    setUploadProgress(prev => [...prev, ...progressEntries]);
+
     try {
-      const uploadPromises = files.map(file =>
-        base44.integrations.Core.UploadFile({ file }).then(res => ({
-          url: res.file_url,
-          name: file.name,
-          type: file.type,
-          isImage: file.type.startsWith("image/"),
-        }))
+      const results = await Promise.all(
+        files.map(async (file, idx) => {
+          try {
+            const res = await uploadFileWithProgress(file, (pct) => {
+              setUploadProgress(prev =>
+                prev.map((item, i) =>
+                  prev.length - files.length + idx === i
+                    ? { ...item, progress: pct }
+                    : item
+                )
+              );
+            });
+            // Mark as done
+            setUploadProgress(prev =>
+              prev.map((item, i) =>
+                prev.length - files.length + idx === i
+                  ? { ...item, progress: 100, status: "done" }
+                  : item
+              )
+            );
+            return {
+              url: res.file_url,
+              name: file.name,
+              type: file.type,
+              isImage: file.type.startsWith("image/"),
+            };
+          } catch (error) {
+            setUploadProgress(prev =>
+              prev.map((item, i) =>
+                prev.length - files.length + idx === i
+                  ? { ...item, status: "error", error: error.message }
+                  : item
+              )
+            );
+            throw error;
+          }
+        })
       );
-      const results = await Promise.all(uploadPromises);
       setUploadedFiles(prev => [...prev, ...results]);
+      // Clear progress entries after a short delay so the user sees 100%
+      setTimeout(() => setUploadProgress([]), 1500);
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadError(error?.message || "Failed to upload files");
+      setUploadError(error?.message || "Failed to upload one or more files");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -746,6 +784,37 @@ ${matchResult.keywords.map(k => `- ${k}`).join('\n')}
                   {uploadError && (
                     <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
                       Upload failed: {uploadError}
+                    </div>
+                  )}
+
+                  {uploadProgress.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {uploadProgress.map((item, idx) => (
+                        <div key={idx} className="bg-gray-50 p-2.5 rounded-lg">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-medium text-gray-700 truncate flex-1 mr-2">{item.name}</span>
+                            <span className={`text-xs font-semibold flex-shrink-0 ${
+                              item.status === "error" ? "text-red-600" :
+                              item.status === "done" ? "text-green-600" : "text-purple-600"
+                            }`}>
+                              {item.status === "error" ? "Failed" :
+                               item.status === "done" ? "Done" : `${item.progress}%`}
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${
+                                item.status === "error"
+                                  ? "bg-red-500"
+                                  : item.status === "done"
+                                  ? "bg-green-500"
+                                  : "bg-gradient-to-r from-purple-500 to-indigo-500"
+                              }`}
+                              style={{ width: `${item.status === "error" ? 100 : item.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
