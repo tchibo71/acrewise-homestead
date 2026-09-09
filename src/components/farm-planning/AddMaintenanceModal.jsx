@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function AddMaintenanceModal({ task, onClose }) {
+export default function AddMaintenanceModal({ task, onClose, prefill = {} }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     task_name: "",
@@ -23,7 +23,8 @@ export default function AddMaintenanceModal({ task, onClose }) {
     last_completed: "",
     next_due: "",
     status: "pending",
-    notes: ""
+    notes: "",
+    ...prefill
   });
 
   useEffect(() => {

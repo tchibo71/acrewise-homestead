@@ -22,7 +22,8 @@ import {
   Gift,
   Sparkles,
   ShoppingBag,
-  AlertTriangle
+  AlertTriangle,
+  Building2
 } from "lucide-react";
 import {
   Sidebar,
@@ -160,6 +161,12 @@ const operationsItems = [
 ];
 
 const infrastructureItems = [
+  {
+    title: "Build Maintenance",
+    url: createPageUrl("BuildMaintenance"),
+    icon: Building2,
+    proOnly: true,
+  },
   {
     title: "Equipment",
     url: createPageUrl("EquipmentManagement"),

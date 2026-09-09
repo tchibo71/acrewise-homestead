@@ -4,6 +4,10 @@ module.exports = {
     content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
   	extend: {
+  		fontFamily: {
+  			display: ['Outfit', 'sans-serif'],
+  			body: ['Inter', 'sans-serif'],
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
@@ -59,8 +63,20 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			bm: {
+  				surface: '#FAF9F6',
+  				card: '#FFFFFF',
+  				border: '#E5E2DC',
+  				primary: '#1C1917',
+  				muted: '#78716C',
+  				accent: '#D97706',
+  				green: '#16A34A',
+  				blue: '#2563EB',
+  				amber: '#D97706',
+  				red: '#DC2626',
   			}
-  		},
+  			},
   		keyframes: {
   			'accordion-down': {
   				from: {
