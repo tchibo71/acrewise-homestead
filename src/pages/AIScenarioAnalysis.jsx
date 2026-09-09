@@ -310,6 +310,90 @@ export default function AIScenarioAnalysis() {
 
   const farmProfile = farmProfiles[0] || null;
 
+  // Fetch livestock, pastures, equipment, and inventory for farm context
+  const { data: livestockList = [] } = useQuery({
+    queryKey: ['ai-context-livestock'],
+    queryFn: () => base44.entities.Livestock.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: pastureList = [] } = useQuery({
+    queryKey: ['ai-context-pastures'],
+    queryFn: () => base44.entities.Pasture.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: equipmentList = [] } = useQuery({
+    queryKey: ['ai-context-equipment'],
+    queryFn: () => base44.entities.Equipment.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: inventoryList = [] } = useQuery({
+    queryKey: ['ai-context-inventory'],
+    queryFn: () => base44.entities.InventoryItem.list(),
+    enabled: subscriptionData.isPro,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  // Build concise farm context string from live operation data
+  const farmContext = React.useMemo(() => {
+    const parts = [];
+
+    // Livestock: count grouped by animal_type
+    if (livestockList.length > 0) {
+      const byType = {};
+      livestockList.forEach(a => {
+        const t = a.animal_type || 'other';
+        byType[t] = (byType[t] || 0) + 1;
+      });
+      const livestockSummary = Object.entries(byType)
+        .map(([type, count]) => `${count} ${type.replace(/_/g, ' ')}${count > 1 ? 's' : ''}`)
+        .join(', ');
+      parts.push(livestockSummary);
+    }
+
+    // Pastures: count and total acreage
+    if (pastureList.length > 0) {
+      const totalAcreage = pastureList.reduce((sum, p) => sum + (p.acreage || 0), 0);
+      parts.push(`${pastureList.length} pasture${pastureList.length > 1 ? 's' : ''} totaling ${totalAcreage} acres`);
+    }
+
+    // Equipment: type and status
+    if (equipmentList.length > 0) {
+      const equipSummary = equipmentList
+        .map(e => `${e.equipment_type || e.name || 'equipment'} (${e.status || 'unknown'})`)
+        .join(', ');
+      parts.push(equipSummary);
+    }
+
+    // Inventory: flag low-stock items
+    const lowStock = inventoryList.filter(
+      item => item.current_quantity != null && item.minimum_quantity != null && item.current_quantity <= item.minimum_quantity
+    );
+    if (lowStock.length > 0) {
+      parts.push(`low stock: ${lowStock.map(i => i.name || i.item_name || 'item').join(', ')}`);
+    }
+
+    // Farm profile (existing behavior)
+    if (farmProfile) {
+      parts.push(`${farmProfile.farm_name}, ${farmProfile.total_acreage} acres, soil: ${farmProfile.soil_types?.map(s => s.soil_type).join(', ') || 'unknown'}`);
+    }
+
+    return parts.length > 0 ? parts.join('; ') : 'No farm data available';
+  }, [livestockList, pastureList, equipmentList, inventoryList, farmProfile]);
+
   const proceedWithGeneration = async (overrodeWarning) => {
     setGenerating(true);
     try {
@@ -379,7 +463,7 @@ This analysis is for informational purposes only and does not constitute legal a
 
 Scenario: "${title} - ${scenario}"
 
-Farm context: ${farmProfile ? `${farmProfile.farm_name}, ${farmProfile.total_acreage} acres, soil types: ${farmProfile.soil_types?.map(s => s.soil_type).join(', ') || 'unknown'}` : 'No farm profile'}
+Farm context (the user's actual operation — ground all recommendations in this): ${farmContext}
 
 Return JSON format:
 {
