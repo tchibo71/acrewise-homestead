@@ -2,13 +2,17 @@
 import { appParams } from "@/lib/app-params";
 
 // Call the getWeather backend function (API key stays server-side)
+// Read token dynamically from localStorage — appParams.token may be stale if
+// the SDK client was initialized before the auth token was stored.
 const callWeatherFunction = async (payload) => {
+  const token = (typeof window !== 'undefined' && localStorage.getItem('base44_access_token')) || appParams.token;
   const url = `${appParams.serverUrl}/api/apps/${appParams.appId}/functions/getWeather`;
   const response = await fetch(url, {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(appParams.token ? { 'Authorization': `Bearer ${appParams.token}` } : {}),
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       'X-Origin-URL': window.location.href,
     },
     body: JSON.stringify(payload),

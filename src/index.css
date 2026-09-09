@@ -158,3 +158,8 @@ button:focus-visible {
     @apply bg-background text-foreground;
   }
 }
+
+/* Dark filter for weather radar base map tiles */
+.radar-base-tiles {
+  filter: brightness(0.45) contrast(1.1) saturate(0.4);
+}

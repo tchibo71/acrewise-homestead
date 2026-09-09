@@ -39,6 +39,7 @@ import {
   getPrecipitationType,
   getHomesteadRecommendations
 } from "@/components/utils/weatherUtils";
+import WeatherRadarMap from "@/components/weather/WeatherRadarMap";
 
 // Fix leaflet icon issue
 import L from "leaflet";
@@ -286,10 +287,44 @@ export default function WeatherDashboard() {
 
   if (isLoadingInitialData) {
     return (
-      <div className="min-h-screen p-4 md:p-8 flex items-center justify-center">
-        <div className="text-center">
-          <Cloud className="w-16 h-16 text-gray-400 mx-auto mb-4 animate-pulse" />
-          <p className="text-gray-600">Loading weather data...</p>
+      <div className="min-h-screen p-4 md:p-8 pb-32">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CloudRain className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Weather Dashboard</h1>
+                <p className="text-gray-600 mt-1 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {user?.property_latitude && user?.property_longitude && `${parseFloat(user.property_latitude).toFixed(4)}, ${parseFloat(user.property_longitude).toFixed(4)}`}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => setShowSettings(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+          </div>
+
+          {/* Live Weather Radar — always visible, even while weather data loads */}
+          {user?.property_latitude && user?.property_longitude && (
+            <WeatherRadarMap
+              latitude={user.property_latitude}
+              longitude={user.property_longitude}
+              weatherData={null}
+            />
+          )}
+
+          {/* Loading indicator */}
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Cloud className="w-16 h-16 text-gray-400 mx-auto mb-4 animate-pulse" />
+              <p className="text-gray-600">Loading weather data...</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -301,8 +336,38 @@ export default function WeatherDashboard() {
   if (primaryError) {
     return (
       <div className="min-h-screen p-4 md:p-8 pb-32">
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-red-300 bg-red-50">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CloudRain className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Weather Dashboard</h1>
+                <p className="text-gray-600 mt-1 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {user?.property_latitude && user?.property_longitude && `${parseFloat(user.property_latitude).toFixed(4)}, ${parseFloat(user.property_longitude).toFixed(4)}`}
+                </p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => setShowSettings(true)}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+          </div>
+
+          {/* Live Weather Radar — always visible, even when weather data fails */}
+          {user?.property_latitude && user?.property_longitude && (
+            <WeatherRadarMap
+              latitude={user.property_latitude}
+              longitude={user.property_longitude}
+              weatherData={null}
+            />
+          )}
+
+          {/* Error message */}
+          <Card className="border-red-300 bg-red-50 max-w-2xl mx-auto">
             <CardContent className="py-8 text-center">
               <AlertTriangle className="w-16 h-16 text-red-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-red-900 mb-2">
@@ -318,7 +383,7 @@ export default function WeatherDashboard() {
                   <Settings className="w-4 h-4 mr-2" />
                   Check Settings
                 </Button>
-                {!isRateLimit && ( // Don't show retry if it's a rate limit, as it will likely fail again
+                {!isRateLimit && (
                   <Button onClick={() => refetchCurrent()} className="bg-blue-600 hover:bg-blue-700">
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Retry
@@ -394,6 +459,15 @@ export default function WeatherDashboard() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Live Weather Radar — always visible above tabs */}
+        {user?.property_latitude && user?.property_longitude && (
+          <WeatherRadarMap
+            latitude={user.property_latitude}
+            longitude={user.property_longitude}
+            weatherData={weatherData}
+          />
         )}
 
         <Tabs defaultValue="current" className="w-full">
