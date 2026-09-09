@@ -98,6 +98,35 @@
         }
       }
     },
+    "soil_series": {
+      "type": "string",
+      "description": "USDA soil series name from SDA lookup at property center point"
+    },
+    "flood_zone": {
+      "type": "string",
+      "description": "FEMA flood zone designation at property center point"
+    },
+    "is_in_floodplain": {
+      "type": "boolean",
+      "description": "Whether the property center point falls within a FEMA SFHA floodplain"
+    },
+    "elevation_ft": {
+      "type": "number",
+      "description": "Elevation in feet at property center point from USGS National Map"
+    },
+    "hardiness_zone": {
+      "type": "string",
+      "description": "USDA plant hardiness zone (e.g., 7a) from ZIP code lookup"
+    },
+    "wetlands_present": {
+      "type": "boolean",
+      "description": "Whether FWS National Wetlands Inventory data indicates wetlands at the property"
+    },
+    "site_data_fetched_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date when site data (soil, flood, elevation, hardiness, wetlands) was last fetched"
+    },
     "ai_recommendations": {
       "type": "string",
       "description": "AI-generated recommendations for improvements"

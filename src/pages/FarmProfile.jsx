@@ -24,6 +24,7 @@ import { geocodeAddress } from "@/components/utils/mapboxConfig";
 import PaywallModal from "../components/paywall/PaywallModal";
 import PhotoAnalysisUploader from "@/components/farm-profile/PhotoAnalysisUploader";
 import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
+import SiteDataCard from "@/components/farm-profile/SiteDataCard";
 
 export default function FarmProfile() {
   const queryClient = useQueryClient();
@@ -45,6 +46,15 @@ export default function FarmProfile() {
     queryFn: async () => {
       const profiles = await base44.entities.FarmProfile.list();
       return profiles[0] || null;
+    },
+    enabled: subscriptionData.isPro
+  });
+
+  const { data: propertyMap } = useQuery({
+    queryKey: ['property-map'],
+    queryFn: async () => {
+      const maps = await base44.entities.PropertyMap.list();
+      return maps[0] || null;
     },
     enabled: subscriptionData.isPro
   });
@@ -198,6 +208,15 @@ Format as clear, numbered sections with specific actionable advice.`;
     e.preventDefault();
     await saveMutation.mutateAsync({
       ...formData,
+      ai_recommendations: aiRecommendations,
+      last_updated: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const handleSaveSiteData = async (siteData) => {
+    await saveMutation.mutateAsync({
+      ...formData,
+      ...siteData,
       ai_recommendations: aiRecommendations,
       last_updated: new Date().toISOString().split('T')[0]
     });
@@ -614,6 +633,13 @@ Format as clear, numbered sections with specific actionable advice.`;
               )}
             </CardContent>
           </Card>
+
+          {/* Site Data */}
+          <SiteDataCard
+            profile={profile}
+            propertyMap={propertyMap}
+            onSave={handleSaveSiteData}
+          />
 
           {/* AI Recommendations */}
           <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
