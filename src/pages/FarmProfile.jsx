@@ -115,6 +115,18 @@ export default function FarmProfile() {
           sanitized[field] = Number(sanitized[field]);
         }
       });
+      // Sanitize nested numeric fields in soil_types array — empty strings cause 422 errors
+      if (sanitized.soil_types) {
+        sanitized.soil_types = sanitized.soil_types.map(s => {
+          const cleaned = { ...s };
+          if (cleaned.acreage === "" || cleaned.acreage === undefined) {
+            delete cleaned.acreage;
+          } else if (typeof cleaned.acreage === "string") {
+            cleaned.acreage = Number(cleaned.acreage);
+          }
+          return cleaned;
+        });
+      }
       if (profile) {
         return await base44.entities.FarmProfile.update(profile.id, sanitized);
       } else {
