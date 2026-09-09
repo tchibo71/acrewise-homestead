@@ -17,6 +17,7 @@
         "failure",
         "milestone",
         "maintenance",
+        "professional_visit",
         "other"
       ],
       "description": "Type of historical event"
@@ -49,7 +50,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Related livestock, crops, infrastructure IDs"
+      "description": "Related livestock, crops, infrastructure, or professional IDs"
     }
   },
   "required": [

@@ -28,7 +28,8 @@ import {
   Bug,
   FileText,
   Apple,
-  Users
+  Users,
+  Stethoscope
 } from "lucide-react";
 import {
   Sidebar,
@@ -145,6 +146,11 @@ const navigationItems = [
     title: "Team",
     url: createPageUrl("Team"),
     icon: Users,
+  },
+  {
+    title: "Professionals",
+    url: createPageUrl("Professionals"),
+    icon: Stethoscope,
   },
   ];
 

@@ -19,6 +19,7 @@ const EquipmentDetail = React.lazy(() => import('./pages/EquipmentDetail'));
 const Documents = React.lazy(() => import('./pages/Documents'));
 const Pantry = React.lazy(() => import('./pages/Pantry'));
 const Team = React.lazy(() => import('./pages/Team'));
+const Professionals = React.lazy(() => import('./pages/Professionals'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -115,6 +116,11 @@ const AuthenticatedApp = () => {
         <Route path="/Team" element={
           <LayoutWrapper currentPageName="Team">
             <Team />
+          </LayoutWrapper>
+        } />
+        <Route path="/Professionals" element={
+          <LayoutWrapper currentPageName="Professionals">
+            <Professionals />
           </LayoutWrapper>
         } />
         <Route path="*" element={<PageNotFound />} />

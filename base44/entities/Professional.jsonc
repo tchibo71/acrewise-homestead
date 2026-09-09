@@ -1,0 +1,97 @@
+{
+  "name": "Professional",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the professional"
+    },
+    "profession_type": {
+      "type": "string",
+      "enum": [
+        "veterinarian",
+        "farrier",
+        "mechanic",
+        "electrician",
+        "plumber",
+        "fence_contractor",
+        "excavator",
+        "agronomist",
+        "nutritionist",
+        "accountant",
+        "equipment_dealer",
+        "other"
+      ],
+      "description": "Type of professional service"
+    },
+    "business_name": {
+      "type": "string",
+      "description": "Business or company name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email address"
+    },
+    "service_area_notes": {
+      "type": "string",
+      "description": "Areas served or travel radius notes"
+    },
+    "last_service_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of last service or visit"
+    },
+    "rating": {
+      "type": "number",
+      "description": "1-5 personal rating"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "name",
+    "profession_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
