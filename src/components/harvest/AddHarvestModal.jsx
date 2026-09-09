@@ -22,6 +22,19 @@ export default function AddHarvestModal({ harvest, onClose }) {
     notes: ""
   });
   const [saving, setSaving] = useState(false);
+  const [saveToPantry, setSaveToPantry] = useState(false);
+  const [pantryData, setPantryData] = useState({
+    category: "",
+    preservation_method: "",
+    storage_location: "",
+    best_by_date: "",
+  });
+
+  const mapPantryUnit = (unit) => {
+    const u = (unit || "").toLowerCase();
+    if (["jars", "lbs", "gallons", "quarts", "pints", "bags"].includes(u)) return u;
+    return "other";
+  };
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -42,8 +55,24 @@ export default function AddHarvestModal({ harvest, onClose }) {
     mutationFn: (data) => harvest 
       ? base44.entities.HarvestRecord.update(harvest.id, data)
       : base44.entities.HarvestRecord.create(data),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['harvest-records'] });
+      if (saveToPantry && !harvest) {
+        try {
+          await base44.entities.StoredFood.create({
+            food_name: formData.crop_type,
+            category: pantryData.category || "fresh",
+            quantity: parseFloat(formData.quantity_harvested),
+            unit: mapPantryUnit(formData.unit),
+            production_date: formData.harvest_date,
+            preservation_method: pantryData.preservation_method || null,
+            best_by_date: pantryData.best_by_date || null,
+            storage_location: pantryData.storage_location || null,
+            source: "own garden",
+          });
+          queryClient.invalidateQueries({ queryKey: ['stored-foods'] });
+        } catch (e) { /* non-fatal */ }
+      }
       onClose();
     },
   });
@@ -230,6 +259,71 @@ export default function AddHarvestModal({ harvest, onClose }) {
                 rows={3}
               />
             </div>
+
+            {!harvest && (
+              <div className="border border-orange-200 rounded-lg p-4 space-y-3 bg-orange-50/50">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={saveToPantry}
+                    onChange={(e) => setSaveToPantry(e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    🍎 Save to Pantry as stored food (preserved, not sold fresh)
+                  </span>
+                </label>
+                {saveToPantry && (
+                  <div className="grid md:grid-cols-2 gap-4 pt-1">
+                    <div>
+                      <Label htmlFor="pantry_category">Pantry Category</Label>
+                      <Select
+                        value={pantryData.category}
+                        onValueChange={(v) => setPantryData({ ...pantryData, category: v })}
+                      >
+                        <SelectTrigger id="pantry_category"><SelectValue placeholder="Select category" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="canned">Canned</SelectItem>
+                          <SelectItem value="frozen">Frozen</SelectItem>
+                          <SelectItem value="dried">Dried</SelectItem>
+                          <SelectItem value="fermented">Fermented</SelectItem>
+                          <SelectItem value="root_cellar">Root Cellar</SelectItem>
+                          <SelectItem value="fresh">Fresh</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="pantry_best_by">Best By Date</Label>
+                      <Input
+                        id="pantry_best_by"
+                        type="date"
+                        value={pantryData.best_by_date}
+                        onChange={(e) => setPantryData({ ...pantryData, best_by_date: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pantry_preservation">Preservation Method</Label>
+                      <Input
+                        id="pantry_preservation"
+                        value={pantryData.preservation_method}
+                        onChange={(e) => setPantryData({ ...pantryData, preservation_method: e.target.value })}
+                        placeholder="e.g. Water bath canning"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="pantry_location">Storage Location</Label>
+                      <Input
+                        id="pantry_location"
+                        value={pantryData.storage_location}
+                        onChange={(e) => setPantryData({ ...pantryData, storage_location: e.target.value })}
+                        placeholder="e.g. Pantry shelf, Freezer"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-xs text-blue-800">

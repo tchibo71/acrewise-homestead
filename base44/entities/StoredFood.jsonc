@@ -1,0 +1,107 @@
+{
+  "name": "StoredFood",
+  "type": "object",
+  "properties": {
+    "food_name": {
+      "type": "string",
+      "description": "Name of the stored food item"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "canned",
+        "frozen",
+        "dried",
+        "fermented",
+        "root_cellar",
+        "fresh",
+        "other"
+      ],
+      "description": "Category of stored food"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Amount stored"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "jars",
+        "lbs",
+        "gallons",
+        "quarts",
+        "pints",
+        "bags",
+        "other"
+      ],
+      "description": "Unit of measurement"
+    },
+    "production_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When the food was produced or harvested"
+    },
+    "preservation_method": {
+      "type": "string",
+      "description": "How the food was preserved"
+    },
+    "best_by_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Best by date for freshness tracking"
+    },
+    "storage_location": {
+      "type": "string",
+      "description": "Where the food is stored"
+    },
+    "source": {
+      "type": "string",
+      "description": "e.g. 'own garden', 'own livestock', 'purchased'"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Additional notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "food_name",
+    "category",
+    "quantity"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

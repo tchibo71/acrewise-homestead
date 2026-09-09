@@ -14,7 +14,20 @@ import { AlertCircle, Save, WifiOff } from "lucide-react";
 export default function AddProductionModal({ livestockId, onClose }) {
   const queryClient = useQueryClient();
   const [validationError, setValidationError] = useState("");
-  
+  const [saveToPantry, setSaveToPantry] = useState(false);
+  const [pantryData, setPantryData] = useState({
+    category: "",
+    preservation_method: "",
+    storage_location: "",
+    best_by_date: "",
+  });
+
+  const mapPantryUnit = (unit) => {
+    const u = (unit || "").toLowerCase();
+    if (["jars", "lbs", "gallons", "quarts", "pints", "bags"].includes(u)) return u;
+    return "other";
+  };
+
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
     queryFn: () => base44.auth.me(),
@@ -55,8 +68,24 @@ export default function AddProductionModal({ livestockId, onClose }) {
       ...data,
       quantity: parseFloat(data.quantity)
     }),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['production', livestockId] });
+      if (saveToPantry) {
+        try {
+          await base44.entities.StoredFood.create({
+            food_name: formData.production_type,
+            category: pantryData.category || "fresh",
+            quantity: parseFloat(formData.quantity),
+            unit: mapPantryUnit(formData.unit),
+            production_date: formData.production_date,
+            preservation_method: pantryData.preservation_method || null,
+            best_by_date: pantryData.best_by_date || null,
+            storage_location: pantryData.storage_location || null,
+            source: "own livestock",
+          });
+          queryClient.invalidateQueries({ queryKey: ['stored-foods'] });
+        } catch (e) { /* non-fatal */ }
+      }
       onClose();
     },
   });
@@ -241,6 +270,66 @@ export default function AddProductionModal({ livestockId, onClose }) {
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
               rows={3}
             />
+          </div>
+
+          <div className="border border-orange-200 rounded-lg p-4 space-y-3 bg-orange-50/50">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={saveToPantry}
+                onChange={(e) => setSaveToPantry(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                🍎 Save to Pantry as stored food (preserved, not sold fresh)
+              </span>
+            </label>
+            {saveToPantry && (
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div>
+                  <Label>Pantry Category</Label>
+                  <Select
+                    value={pantryData.category}
+                    onValueChange={(v) => setPantryData({ ...pantryData, category: v })}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="canned">Canned</SelectItem>
+                      <SelectItem value="frozen">Frozen</SelectItem>
+                      <SelectItem value="dried">Dried</SelectItem>
+                      <SelectItem value="fermented">Fermented</SelectItem>
+                      <SelectItem value="root_cellar">Root Cellar</SelectItem>
+                      <SelectItem value="fresh">Fresh</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Best By Date</Label>
+                  <Input
+                    type="date"
+                    value={pantryData.best_by_date}
+                    onChange={(e) => setPantryData({ ...pantryData, best_by_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Preservation Method</Label>
+                  <Input
+                    value={pantryData.preservation_method}
+                    onChange={(e) => setPantryData({ ...pantryData, preservation_method: e.target.value })}
+                    placeholder="e.g. Freezing, Canning"
+                  />
+                </div>
+                <div>
+                  <Label>Storage Location</Label>
+                  <Input
+                    value={pantryData.storage_location}
+                    onChange={(e) => setPantryData({ ...pantryData, storage_location: e.target.value })}
+                    placeholder="e.g. Freezer, Pantry"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-between gap-3">

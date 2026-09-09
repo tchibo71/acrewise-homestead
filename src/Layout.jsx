@@ -26,7 +26,8 @@ import {
   Building2,
   Footprints,
   Bug,
-  FileText
+  FileText,
+  Apple
 } from "lucide-react";
 import {
   Sidebar,
@@ -133,6 +134,11 @@ const navigationItems = [
     title: "Documents",
     url: createPageUrl("Documents"),
     icon: FileText,
+  },
+  {
+    title: "Pantry",
+    url: createPageUrl("Pantry"),
+    icon: Apple,
   },
   ];
 
