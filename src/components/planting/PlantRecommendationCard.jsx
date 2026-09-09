@@ -39,7 +39,12 @@ const frostToleranceConfig = {
   "frost sensitive": { Icon: Flame, color: "bg-red-100 text-red-800 border-red-300" },
 };
 
-const isValid = (val) => val && val !== "null" && val !== "undefined" && val !== "";
+const isValid = (val) => {
+  if (!val || val === "null" || val === "undefined" || val === "") return false;
+  const lower = String(val).toLowerCase().trim();
+  if (["n/a", "not applicable", "not recommended", "none", "null"].includes(lower)) return false;
+  return true;
+};
 
 export default function PlantRecommendationCard({
   crop,

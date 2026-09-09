@@ -1,7 +1,12 @@
 import React from "react";
 import { Home, Sun, Wind, ArrowRight } from "lucide-react";
 
-const isValid = (val) => val && val !== "null" && val !== "undefined" && val !== "";
+const isValid = (val) => {
+  if (!val || val === "null" || val === "undefined" || val === "") return false;
+  const lower = String(val).toLowerCase().trim();
+  if (["n/a", "not applicable", "not recommended", "none", "null"].includes(lower)) return false;
+  return true;
+};
 
 export default function PlantingSchedule({ crop }) {
   const hasIndoorStart =
