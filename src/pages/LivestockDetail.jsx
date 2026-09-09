@@ -722,6 +722,7 @@ export default function LivestockDetail() {
         {showVaccinationModal && (
           <AddVaccinationModal
             livestockId={livestockId}
+            animalName={animal?.name_or_tag}
             onClose={() => setShowVaccinationModal(false)}
           />
         )}

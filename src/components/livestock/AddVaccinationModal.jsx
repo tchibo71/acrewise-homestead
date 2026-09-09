@@ -8,9 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-import { Save, WifiOff } from "lucide-react";
+import { Save, WifiOff, Sparkles } from "lucide-react";
+import VaccinationRecordUploader from "./VaccinationRecordUploader";
 
-export default function AddVaccinationModal({ livestockId, onClose }) {
+export default function AddVaccinationModal({ livestockId, onClose, animalName }) {
   const queryClient = useQueryClient();
   
   const { data: currentUser } = useQuery({
@@ -70,6 +71,21 @@ export default function AddVaccinationModal({ livestockId, onClose }) {
     }
   };
 
+  const handleExtracted = (extracted) => {
+    setFormData((prev) => ({
+      ...prev,
+      vaccine_name: extracted.vaccine_name || prev.vaccine_name,
+      vaccination_date: extracted.vaccination_date || prev.vaccination_date,
+      next_due_date: extracted.next_due_date || prev.next_due_date,
+      administered_by: extracted.administered_by || prev.administered_by,
+      batch_number: extracted.batch_number || prev.batch_number,
+      dosage: extracted.dosage || prev.dosage,
+      location: extracted.location || prev.location,
+      cost: extracted.cost != null ? String(extracted.cost) : prev.cost,
+      notes: extracted.notes || prev.notes,
+    }));
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -86,6 +102,23 @@ export default function AddVaccinationModal({ livestockId, onClose }) {
               </p>
             </div>
           )}
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-blue-500" />
+              <p className="text-sm font-semibold text-gray-700">Auto-fill from document</p>
+            </div>
+            <VaccinationRecordUploader onExtracted={handleExtracted} animalName={animalName} />
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-white px-3 text-xs text-gray-400">or enter manually</span>
+            </div>
+          </div>
 
           <div>
             <Label>Vaccine Name *</Label>
