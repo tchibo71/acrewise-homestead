@@ -23,7 +23,8 @@ import {
   Sparkles,
   ShoppingBag,
   AlertTriangle,
-  Building2
+  Building2,
+  Footprints
 } from "lucide-react";
 import {
   Sidebar,
@@ -133,6 +134,12 @@ const operationsItems = [
     title: "Livestock",
     url: createPageUrl("LivestockManagement"),
     icon: Heart,
+    proOnly: true,
+  },
+  {
+    title: "Grazing",
+    url: createPageUrl("GrazingManagement"),
+    icon: Footprints,
     proOnly: true,
   },
   {

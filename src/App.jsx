@@ -12,6 +12,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ErrorBoundary from '@/components/ErrorBoundary';
 const BuildMaintenance = React.lazy(() => import('./pages/BuildMaintenance'));
+const GrazingManagement = React.lazy(() => import('./pages/GrazingManagement'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -73,6 +74,11 @@ const AuthenticatedApp = () => {
         <Route path="/BuildMaintenance" element={
           <LayoutWrapper currentPageName="BuildMaintenance">
             <BuildMaintenance />
+          </LayoutWrapper>
+        } />
+        <Route path="/GrazingManagement" element={
+          <LayoutWrapper currentPageName="GrazingManagement">
+            <GrazingManagement />
           </LayoutWrapper>
         } />
         <Route path="*" element={<PageNotFound />} />

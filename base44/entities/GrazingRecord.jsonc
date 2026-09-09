@@ -1,0 +1,72 @@
+{
+  "name": "GrazingRecord",
+  "type": "object",
+  "properties": {
+    "pasture_id": {
+      "type": "string",
+      "description": "ID of the pasture being grazed"
+    },
+    "livestock_group": {
+      "type": "string",
+      "description": "Which animals or group, e.g. 'goat herd' or specific animal IDs"
+    },
+    "animal_count": {
+      "type": "number",
+      "description": "Number of animals in the grazing group"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When grazing started"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When grazing ended"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notes about this grazing period"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "pasture_id",
+    "start_date"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
