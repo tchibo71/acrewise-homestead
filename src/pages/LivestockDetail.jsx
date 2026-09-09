@@ -41,18 +41,7 @@ import ExportButtons from "../components/utils/ExportButtons";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 
-const animalIcons = {
-  chicken: "🐔",
-  goat: "🐐",
-  sheep: "🐑",
-  pig: "🐷",
-  cow: "🐄",
-  rabbit: "🐰",
-  duck: "🦆",
-  turkey: "🦃",
-  bee_hive: "🐝",
-  other: "🐾"
-};
+import AnimalIcon from "../components/livestock/AnimalIcon";
 
 const statusColors = {
   active: "bg-green-100 text-green-700 border-green-200",
@@ -248,7 +237,7 @@ export default function LivestockDetail() {
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <div className="text-6xl">{animalIcons[animal.animal_type]}</div>
+                <AnimalIcon animal={animal} emojiClass="text-6xl" svgClass="w-16 h-16 text-blue-600" />
                 <div>
                   <CardTitle className="text-3xl">{animal.name_or_tag}</CardTitle>
                   <p className="text-lg text-gray-600 capitalize mt-1">
@@ -354,32 +343,32 @@ export default function LivestockDetail() {
 
         {/* Tabs for Records */}
         <Tabs defaultValue="weights" className="w-full">
-          <TabsList className="grid w-full grid-cols-7"> {/* Updated from grid-cols-6 to grid-cols-7 */}
-            <TabsTrigger value="weights">
+          <TabsList className="flex flex-wrap w-full h-auto gap-1 p-1">
+            <TabsTrigger value="weights" className="flex-1 min-w-[110px]">
               <Weight className="w-4 h-4 mr-2" />
               Weights
             </TabsTrigger>
-            <TabsTrigger value="health">
+            <TabsTrigger value="health" className="flex-1 min-w-[110px]">
               <Stethoscope className="w-4 h-4 mr-2" />
               Health
             </TabsTrigger>
-            <TabsTrigger value="vaccinations">
+            <TabsTrigger value="vaccinations" className="flex-1 min-w-[110px]">
               <Syringe className="w-4 h-4 mr-2" />
               Vaccinations
             </TabsTrigger>
-            <TabsTrigger value="production">
+            <TabsTrigger value="production" className="flex-1 min-w-[110px]">
               <Activity className="w-4 h-4 mr-2" />
               Production
             </TabsTrigger>
-            <TabsTrigger value="tasks"> {/* New Tab */}
+            <TabsTrigger value="tasks" className="flex-1 min-w-[110px]">
               <CheckSquare className="w-4 h-4 mr-2" />
               Tasks
             </TabsTrigger>
-            <TabsTrigger value="lineage">
+            <TabsTrigger value="lineage" className="flex-1 min-w-[110px]">
               <GitGraph className="w-4 h-4 mr-2" />
               Lineage
             </TabsTrigger>
-            <TabsTrigger value="breeding">
+            <TabsTrigger value="breeding" className="flex-1 min-w-[110px]">
               <Baby className="w-4 h-4 mr-2" />
               Breeding
             </TabsTrigger>

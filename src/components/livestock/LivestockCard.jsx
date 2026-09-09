@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -10,19 +9,7 @@ import {
   Heart,
   Activity
 } from "lucide-react";
-
-const animalIcons = {
-  chicken: "🐔",
-  goat: "🐐",
-  sheep: "🐑",
-  pig: "🐷",
-  cow: "🐄",
-  rabbit: "🐰",
-  duck: "🦆",
-  turkey: "🦃",
-  bee_hive: "🐝",
-  other: "🐾"
-};
+import AnimalIcon from "@/components/livestock/AnimalIcon";
 
 const statusColors = {
   active: "bg-green-100 text-green-700 border-green-200",
@@ -59,7 +46,7 @@ export default function LivestockCard({ animal }) {
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-4xl">{animalIcons[animal.animal_type]}</div>
+            <AnimalIcon animal={animal} emojiClass="text-4xl" svgClass="w-10 h-10 text-blue-600" />
             <div>
               <CardTitle className="text-lg">{animal.name_or_tag}</CardTitle>
               <p className="text-sm text-gray-600 capitalize">
