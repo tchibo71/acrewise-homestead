@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Save, Clock, Camera } from "lucide-react";
 import { saveDraft } from "@/components/utils/offlineStorage";
+import { logEmergencyLogEvent } from "@/components/utils/farmHistoryLogger";
 
 export default function EmergencyLogModal({ onClose }) {
   const queryClient = useQueryClient();
@@ -29,8 +30,10 @@ export default function EmergencyLogModal({ onClose }) {
 
   const createEmergencyMutation = useMutation({
     mutationFn: (data) => base44.entities.EmergencyLog.create(data),
-    onSuccess: () => {
+    onSuccess: (newEmergency) => {
       queryClient.invalidateQueries({ queryKey: ['emergency-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      logEmergencyLogEvent(newEmergency);
       onClose();
     },
   });

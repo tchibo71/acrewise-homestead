@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Check } from "lucide-react";
+import { logGrazingStartEvent } from "@/components/utils/farmHistoryLogger";
 
 export default function StartGrazingModal({ pasture, onClose }) {
   const queryClient = useQueryClient();
@@ -30,12 +31,15 @@ export default function StartGrazingModal({ pasture, onClose }) {
       Object.keys(submitData).forEach(key => {
         if (submitData[key] === undefined || submitData[key] === "") delete submitData[key];
       });
-      await base44.entities.GrazingRecord.create(submitData);
+      const record = await base44.entities.GrazingRecord.create(submitData);
       await base44.entities.Pasture.update(pasture.id, { status: "grazing" });
+      return record;
     },
-    onSuccess: () => {
+    onSuccess: (record) => {
       queryClient.invalidateQueries({ queryKey: ['pastures'] });
       queryClient.invalidateQueries({ queryKey: ['grazing-records'] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      logGrazingStartEvent(pasture, record);
       onClose();
     },
   });

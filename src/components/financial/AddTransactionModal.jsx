@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, Save, WifiOff } from "lucide-react";
+import { logMajorExpenseEvent } from "@/components/utils/farmHistoryLogger";
 
 export default function AddTransactionModal({ onClose }) {
   const queryClient = useQueryClient();
@@ -33,8 +34,12 @@ export default function AddTransactionModal({ onClose }) {
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.FinancialTransaction.create(data),
-    onSuccess: () => {
+    onSuccess: (newTransaction) => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      if (newTransaction.transaction_type === 'expense' && newTransaction.amount > 100) {
+        logMajorExpenseEvent(newTransaction);
+      }
       onClose();
     },
   });

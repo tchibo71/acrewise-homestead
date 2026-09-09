@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, WifiOff } from "lucide-react";
+import { logWeightRecordEvent } from "@/components/utils/farmHistoryLogger";
 
 export default function AddWeightRecordModal({ livestockId, onClose }) {
   const queryClient = useQueryClient();
@@ -46,9 +47,11 @@ export default function AddWeightRecordModal({ livestockId, onClose }) {
       
       return record;
     },
-    onSuccess: () => {
+    onSuccess: (record) => {
       queryClient.invalidateQueries({ queryKey: ['weight-records', livestockId] });
       queryClient.invalidateQueries({ queryKey: ['livestock', livestockId] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      logWeightRecordEvent(record);
       onClose();
     },
   });

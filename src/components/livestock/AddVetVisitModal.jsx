@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, WifiOff } from "lucide-react";
+import { logVetVisitEvent } from "@/components/utils/farmHistoryLogger";
 
 export default function AddVetVisitModal({ livestockId, onClose }) {
   const queryClient = useQueryClient();
@@ -53,8 +54,10 @@ export default function AddVetVisitModal({ livestockId, onClose }) {
       famacha_score: data.famacha_score ? parseInt(data.famacha_score) : null,
       body_condition_score: data.body_condition_score ? parseInt(data.body_condition_score) : null
     }),
-    onSuccess: () => {
+    onSuccess: (newVisit) => {
       queryClient.invalidateQueries({ queryKey: ['vet-visits', livestockId] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      logVetVisitEvent(newVisit);
       onClose();
     },
   });

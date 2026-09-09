@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AddPastureModal from "@/components/grazing/AddPastureModal";
 import StartGrazingModal from "@/components/grazing/StartGrazingModal";
+import { logGrazingEndEvent } from "@/components/utils/farmHistoryLogger";
 
 function getDaysSince(dateStr) {
   if (!dateStr) return null;
@@ -67,6 +68,8 @@ function PastureCard({ pasture, grazingRecords, onStartGrazing, onEndGrazing }) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pastures'] });
       queryClient.invalidateQueries({ queryKey: ['grazing-records'] });
+      queryClient.invalidateQueries({ queryKey: ['farm-activity-feed'] });
+      logGrazingEndEvent(pasture, activeGrazingRecord);
     },
   });
 

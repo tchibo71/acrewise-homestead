@@ -10,10 +10,10 @@ export async function logLivestockAdded(livestock) {
     await base44.entities.FarmHistory.create({
       event_date: new Date().toISOString().split('T')[0],
       event_type: "milestone",
-      title: `New Livestock Added: ${livestock.name_or_tag}`,
+      title: `livestock_added|New Livestock: ${livestock.name_or_tag}`,
       description: `Added ${livestock.animal_type}${livestock.breed ? ` (${livestock.breed})` : ''} - ${livestock.name_or_tag}. Purpose: ${livestock.purpose || 'Not specified'}.`,
       financial_impact: livestock.acquisition_cost ? -livestock.acquisition_cost : null,
-      related_entities: [livestock.id]
+      related_entities: [`livestock:${livestock.id}`]
     });
   } catch (error) {
     console.error("Failed to log livestock addition:", error);
@@ -96,5 +96,96 @@ export async function logMilestone(title, description, financialImpact = null) {
     });
   } catch (error) {
     console.error("Failed to log milestone:", error);
+  }
+}
+
+export async function logVetVisitEvent(visit) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: visit.visit_date || new Date().toISOString().split('T')[0],
+      event_type: "maintenance",
+      title: `vet_visit|Vet Visit: ${(visit.visit_type || 'checkup').replace(/_/g, ' ')}`,
+      description: visit.diagnosis || visit.treatment || "Veterinary visit recorded.",
+      financial_impact: visit.cost ? -visit.cost : null,
+      related_entities: visit.livestock_id
+        ? [`livestock:${visit.livestock_id}`, `vet_visit:${visit.id}`]
+        : [`vet_visit:${visit.id}`]
+    });
+  } catch (error) {
+    console.error("Failed to log vet visit event:", error);
+  }
+}
+
+export async function logWeightRecordEvent(record) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: record.measurement_date || new Date().toISOString().split('T')[0],
+      event_type: "maintenance",
+      title: `weight_recorded|Weight Recorded: ${record.weight} ${record.weight_unit || 'lbs'}`,
+      description: record.notes || "New weight measurement logged.",
+      related_entities: record.livestock_id
+        ? [`livestock:${record.livestock_id}`, `weight_record:${record.id}`]
+        : [`weight_record:${record.id}`]
+    });
+  } catch (error) {
+    console.error("Failed to log weight record event:", error);
+  }
+}
+
+export async function logGrazingStartEvent(pasture, record) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: record?.start_date || new Date().toISOString().split('T')[0],
+      event_type: "other",
+      title: `grazing_change|Grazing Started: ${pasture.name}`,
+      description: `Grazing began on ${pasture.name}${pasture.acreage ? ` (${pasture.acreage} acres)` : ''}.${record?.livestock_group ? ` Group: ${record.livestock_group}.` : ''}`,
+      related_entities: [`pasture:${pasture.id}`, record ? `grazing_record:${record.id}` : null].filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Failed to log grazing start event:", error);
+  }
+}
+
+export async function logGrazingEndEvent(pasture, record) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: new Date().toISOString().split('T')[0],
+      event_type: "other",
+      title: `grazing_change|Grazing Ended: ${pasture.name}`,
+      description: `Grazing ended on ${pasture.name}. Now entering rest period of ${pasture.rest_period_days || 21} days.`,
+      related_entities: [`pasture:${pasture.id}`, record ? `grazing_record:${record.id}` : null].filter(Boolean)
+    });
+  } catch (error) {
+    console.error("Failed to log grazing end event:", error);
+  }
+}
+
+export async function logMajorExpenseEvent(transaction) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: transaction.transaction_date || new Date().toISOString().split('T')[0],
+      event_type: "other",
+      title: `major_expense|Major Expense: $${Number(transaction.amount).toFixed(0)} — ${transaction.description || transaction.category}`,
+      description: `Expense of $${Number(transaction.amount).toFixed(2)} in category: ${transaction.category}.${transaction.vendor_customer ? ` Vendor: ${transaction.vendor_customer}.` : ''}`,
+      financial_impact: -transaction.amount,
+      related_entities: [`financial_transaction:${transaction.id}`]
+    });
+  } catch (error) {
+    console.error("Failed to log major expense event:", error);
+  }
+}
+
+export async function logEmergencyLogEvent(emergency) {
+  try {
+    await base44.entities.FarmHistory.create({
+      event_date: new Date().toISOString().split('T')[0],
+      event_type: "emergency",
+      title: `emergency|${(emergency.emergency_type || 'emergency').replace(/_/g, ' ')}: ${emergency.quick_description || 'Emergency logged'}`,
+      description: `${emergency.quick_description || ''}${emergency.location_on_property ? ` Location: ${emergency.location_on_property}.` : ''} Severity: ${emergency.severity || 'high'}.`,
+      financial_impact: emergency.financial_impact ? -emergency.financial_impact : null,
+      related_entities: [`emergency_log:${emergency.id}`]
+    });
+  } catch (error) {
+    console.error("Failed to log emergency event:", error);
   }
 }

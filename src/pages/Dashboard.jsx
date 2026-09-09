@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // Lazy load non-critical components
 const SeasonalGuide = lazy(() => import("../components/dashboard/SeasonalGuide"));
 const QuickActions = lazy(() => import("../components/dashboard/QuickActions"));
-const RecentActivity = lazy(() => import("@/components/dashboard/RecentActivity"));
+const FarmActivityFeed = lazy(() => import("@/components/dashboard/FarmActivityFeed"));
 const WeatherWidget = lazy(() => import("../components/dashboard/WeatherWidget"));
 const SmartReorderAlert = lazy(() => import("../components/dashboard/SmartReorderAlert"));
 const TeamCollaboration = lazy(() => import("../components/dashboard/TeamCollaboration"));
@@ -283,7 +283,7 @@ export default function Dashboard() {
               />
             </Suspense>
             <Suspense fallback={<CardSkeleton />}>
-              <RecentActivity />
+              <FarmActivityFeed />
             </Suspense>
           </div>
         </div>
