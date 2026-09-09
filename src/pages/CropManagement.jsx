@@ -10,7 +10,8 @@ import {
   Trash2,
   Crown,
   TrendingUp,
-  ListChecks
+  ListChecks,
+  Calendar
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import AddPestManagementModal from "../components/farm-planning/AddPestManagemen
 import ROIAnalytics from "../components/harvest/ROIAnalytics";
 import AddHarvestModal from "../components/harvest/AddHarvestModal";
 import AddRecommendationsToChecklist from "@/components/checklists/AddRecommendationsToChecklist";
+import PlotHistory from "@/components/crop-management/PlotHistory";
 
 export default function CropManagement() {
   const [activeSection, setActiveSection] = useState("crops");
@@ -37,6 +39,7 @@ export default function CropManagement() {
   const [checklistRecommendations, setChecklistRecommendations] = useState("");
   const [checklistSourceCategory, setChecklistSourceCategory] = useState("");
   const [checklistSourceTitle, setChecklistSourceTitle] = useState("");
+  const [historyPlotId, setHistoryPlotId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: subscriptionData } = useQuery({
@@ -244,7 +247,17 @@ export default function CropManagement() {
                             </div>
                           )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          {crop.location && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setHistoryPlotId(crop.location)}
+                            >
+                              <Calendar className="w-4 h-4 mr-1" />
+                              View Full History
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" onClick={() => { setEditingItem(crop); setShowCropModal(true); }}>
                             <Edit className="w-4 h-4 text-gray-600" />
                           </Button>
@@ -455,6 +468,12 @@ export default function CropManagement() {
             recommendationsText={checklistRecommendations}
             sourceCategory={checklistSourceCategory}
             sourceTitle={checklistSourceTitle}
+            />
+
+            <PlotHistory
+              plotIdentifier={historyPlotId}
+              isOpen={!!historyPlotId}
+              onClose={() => setHistoryPlotId(null)}
             />
             </div>
             </div>
