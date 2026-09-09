@@ -18,6 +18,17 @@ export default function AddVetVisitModal({ livestockId, onClose }) {
     queryFn: () => base44.auth.me(),
   });
 
+  const { data: animal } = useQuery({
+    queryKey: ['livestock', livestockId],
+    queryFn: async () => {
+      const animals = await base44.entities.Livestock.list();
+      return animals.find(a => a.id === livestockId) ?? null;
+    },
+    enabled: !!livestockId,
+  });
+
+  const showFamacha = animal?.animal_type === 'goat' || animal?.animal_type === 'sheep';
+
   const [formData, setFormData] = useState({
     livestock_id: livestockId,
     visit_date: new Date().toISOString().split('T')[0],
@@ -27,6 +38,8 @@ export default function AddVetVisitModal({ livestockId, onClose }) {
     treatment: "",
     medications: [],
     cost: "",
+    famacha_score: "",
+    body_condition_score: "",
     follow_up_date: "",
     notes: ""
   });
@@ -36,7 +49,9 @@ export default function AddVetVisitModal({ livestockId, onClose }) {
   const mutation = useMutation({
     mutationFn: (data) => base44.entities.VetVisit.create({
       ...data,
-      cost: data.cost ? parseFloat(data.cost) : null
+      cost: data.cost ? parseFloat(data.cost) : null,
+      famacha_score: data.famacha_score ? parseInt(data.famacha_score) : null,
+      body_condition_score: data.body_condition_score ? parseInt(data.body_condition_score) : null
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vet-visits', livestockId] });
@@ -215,6 +230,54 @@ export default function AddVetVisitModal({ livestockId, onClose }) {
                 value={formData.follow_up_date}
                 onChange={(e) => setFormData({...formData, follow_up_date: e.target.value})}
               />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {showFamacha && (
+              <div>
+                <Label>FAMACHA Score</Label>
+                <Select
+                  value={formData.famacha_score}
+                  onValueChange={(value) => setFormData({...formData, famacha_score: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="1–5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1 — Healthy (red)</SelectItem>
+                    <SelectItem value="2">2 — Mild</SelectItem>
+                    <SelectItem value="3">3 — Moderate</SelectItem>
+                    <SelectItem value="4">4 — Severe</SelectItem>
+                    <SelectItem value="5">5 — Critical (white)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">Eyelid color for parasite load</p>
+              </div>
+            )}
+
+            <div className={showFamacha ? "" : "col-span-2"}>
+              <Label>Body Condition Score</Label>
+              <Select
+                value={formData.body_condition_score}
+                onValueChange={(value) => setFormData({...formData, body_condition_score: value})}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="1–9" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 — Emaciated</SelectItem>
+                  <SelectItem value="2">2 — Very thin</SelectItem>
+                  <SelectItem value="3">3 — Thin</SelectItem>
+                  <SelectItem value="4">4 — Borderline</SelectItem>
+                  <SelectItem value="5">5 — Moderate</SelectItem>
+                  <SelectItem value="6">6 — Good</SelectItem>
+                  <SelectItem value="7">7 — Fleshy</SelectItem>
+                  <SelectItem value="8">8 — Fat</SelectItem>
+                  <SelectItem value="9">9 — Obese</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">1–9 scale</p>
             </div>
           </div>
 

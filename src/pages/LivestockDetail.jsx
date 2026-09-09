@@ -20,6 +20,7 @@ import {
   GitGraph,
   Baby,
   CheckSquare,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -176,6 +177,10 @@ export default function LivestockDetail() {
   }
 
   const weightGain = getWeightGain();
+  const latestVetVisit = vetVisits[0];
+  const latestBCS = latestVetVisit?.body_condition_score;
+  const showFamacha = animal.animal_type === 'goat' || animal.animal_type === 'sheep';
+  const latestFamacha = showFamacha ? latestVetVisit?.famacha_score : null;
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -304,6 +309,32 @@ export default function LivestockDetail() {
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {weightGain.perDay.toFixed(2)} {animal.weight_unit}/day avg
+                  </p>
+                </div>
+              )}
+
+              {latestBCS != null && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Body Condition</p>
+                  <p className="text-lg font-semibold flex items-center gap-2">
+                    <Activity className={`w-4 h-4 ${latestBCS <= 3 ? 'text-red-500' : latestBCS <= 6 ? 'text-green-600' : 'text-orange-500'}`} />
+                    {latestBCS}/9
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {latestBCS <= 3 ? 'Thin' : latestBCS <= 6 ? 'Healthy' : 'Overweight'}
+                  </p>
+                </div>
+              )}
+
+              {showFamacha && latestFamacha != null && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">FAMACHA</p>
+                  <p className="text-lg font-semibold flex items-center gap-2">
+                    <Eye className={`w-4 h-4 ${latestFamacha <= 2 ? 'text-green-600' : latestFamacha === 3 ? 'text-yellow-500' : 'text-red-500'}`} />
+                    {latestFamacha}/5
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {latestFamacha <= 2 ? 'Low parasite load' : latestFamacha === 3 ? 'Monitor' : 'High parasite load'}
                   </p>
                 </div>
               )}
