@@ -1,0 +1,128 @@
+{
+  "name": "WholesaleOrder",
+  "type": "object",
+  "properties": {
+    "wholesale_account_id": {
+      "type": "string",
+      "description": "ID of the WholesaleAccount this order belongs to"
+    },
+    "order_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the order was placed"
+    },
+    "delivery_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled delivery date"
+    },
+    "species": {
+      "type": "string",
+      "description": "Mushroom species for this order"
+    },
+    "quantity": {
+      "type": "number",
+      "description": "Quantity ordered"
+    },
+    "unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "oz",
+        "cases"
+      ],
+      "description": "Unit of measurement"
+    },
+    "price_per_unit": {
+      "type": "number",
+      "description": "Agreed price per unit in dollars"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "calculated: quantity * price_per_unit"
+    },
+    "fulfilled_from_flush_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "links to MushroomFlush records this order was fulfilled from - the critical traceability link from harvest lot to customer"
+    },
+    "delivery_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "delivered",
+        "cancelled"
+      ],
+      "default": "scheduled",
+      "description": "Current delivery status"
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "auto-generate as INV-[YYYYMMDD]-[sequential number] if not manually set"
+    },
+    "invoice_status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "paid",
+        "overdue"
+      ],
+      "default": "draft",
+      "description": "Current invoice status"
+    },
+    "payment_received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date payment was received"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "wholesale_account_id",
+    "order_date",
+    "species",
+    "quantity"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
