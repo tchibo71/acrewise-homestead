@@ -29,7 +29,8 @@ import {
   FileText,
   Apple,
   Users,
-  Stethoscope
+  Stethoscope,
+  Microscope
 } from "lucide-react";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { checkSubscription } from "@/components/utils/subscriptionUtils";
+import { base44 } from "@/api/base44Client";
 
 import { User } from "lucide-react";
 import EmergencyButton from "@/components/emergency/EmergencyButton";
@@ -183,6 +185,12 @@ const operationsItems = [
     title: "Seed Starting",
     url: createPageUrl("SeedStarting"),
     icon: Sprout,
+  },
+  {
+    title: "Mushroom Lab",
+    url: "/MushroomLab",
+    icon: Microscope,
+    commercialOnly: true,
   },
   {
     title: "Fermentation",
