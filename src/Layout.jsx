@@ -30,7 +30,8 @@ import {
   Apple,
   Users,
   Stethoscope,
-  Microscope
+  Microscope,
+  DoorOpen
 } from "lucide-react";
 import {
   Sidebar,
@@ -190,6 +191,12 @@ const operationsItems = [
     title: "Mushroom Lab",
     url: "/MushroomLab",
     icon: Microscope,
+    commercialOnly: true,
+  },
+  {
+    title: "Grow Rooms",
+    url: "/GrowRoomManagement",
+    icon: DoorOpen,
     commercialOnly: true,
   },
   {
