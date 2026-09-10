@@ -4,11 +4,13 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, DollarSign, Sprout, Target, Package, Heart } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Sprout, Target, Package, Heart, ChevronUp, ChevronDown, Wind } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from "recharts";
 
 export default function ROIAnalytics() {
   const [showCalculations, setShowCalculations] = React.useState(false);
+  const [seedSortKey, setSeedSortKey] = React.useState('variety');
+  const [seedSortDir, setSeedSortDir] = React.useState('asc');
   const { data: harvests = [] } = useQuery({
     queryKey: ['harvest-records'],
     queryFn: () => base44.entities.HarvestRecord.list('-harvest_date'),
@@ -42,6 +44,16 @@ export default function ROIAnalytics() {
   const { data: sales = [] } = useQuery({
     queryKey: ['sales'],
     queryFn: () => base44.entities.Sale.list('-sale_date'),
+  });
+
+  const { data: seedBatches = [] } = useQuery({
+    queryKey: ['seed-batches'],
+    queryFn: () => base44.entities.SeedBatch.list('-sow_date'),
+  });
+
+  const { data: cropPlans = [] } = useQuery({
+    queryKey: ['crop-plans'],
+    queryFn: () => base44.entities.CropPlan.list(),
   });
 
   const { data: farmProfile = null } = useQuery({
@@ -166,13 +178,157 @@ export default function ROIAnalytics() {
     };
   }, [livestock, transactions, sales, farmProfile, showCalculations]);
 
+  // Calculate seed starting performance metrics
+  const calculateSeedStartingPerformance = React.useCallback(() => {
+    if (!showCalculations) return null;
+    if (seedBatches.length === 0) return null;
+
+    const batchData = seedBatches.map(batch => {
+      const batchExpenses = transactions.filter(
+        t => t.transaction_type === 'expense' && t.seed_batch_id === batch.id
+      );
+      const expenseTotal = batchExpenses.reduce((sum, t) => sum + (t.amount || 0), 0);
+      const totalCost = (batch.seed_cost || 0) + expenseTotal;
+
+      const germinationRate = batch.seeds_sown > 0
+        ? (batch.seeds_germinated || 0) / batch.seeds_sown
+        : 0;
+      const hardeningSurvivalRate = batch.hardening_started_count > 0
+        ? (batch.hardening_survived_count || 0) / batch.hardening_started_count
+        : 0;
+      const overallSurvivalRate = batch.seeds_sown > 0
+        ? (batch.hardening_survived_count || 0) / batch.seeds_sown
+        : 0;
+
+      const costPerGerminated = batch.seeds_germinated > 0
+        ? totalCost / batch.seeds_germinated
+        : null;
+      const costPerSurviving = batch.hardening_survived_count > 0
+        ? totalCost / batch.hardening_survived_count
+        : null;
+
+      const cropPlan = batch.crop_plan_id
+        ? cropPlans.find(cp => cp.id === batch.crop_plan_id)
+        : null;
+      const year = cropPlan?.year || null;
+
+      return {
+        id: batch.id,
+        cropName: batch.crop_name,
+        variety: batch.variety || '—',
+        year,
+        seedsSown: batch.seeds_sown || 0,
+        seedsGerminated: batch.seeds_germinated || 0,
+        hardeningStarted: batch.hardening_started_count || 0,
+        hardeningSurvived: batch.hardening_survived_count || 0,
+        germinationRate,
+        hardeningSurvivalRate,
+        overallSurvivalRate,
+        totalCost,
+        costPerGerminated,
+        costPerSurviving,
+      };
+    });
+
+    // Summary grouping by crop_name + variety across all years
+    const varietyMap = {};
+    batchData.forEach(b => {
+      const key = `${b.cropName}|||${b.variety}`;
+      if (!varietyMap[key]) {
+        varietyMap[key] = {
+          cropName: b.cropName,
+          variety: b.variety,
+          batchCount: 0,
+          germinationRates: [],
+          hardeningSurvivalRates: [],
+          overallSurvivalRates: [],
+          years: [],
+        };
+      }
+      const v = varietyMap[key];
+      v.batchCount++;
+      v.germinationRates.push(b.germinationRate);
+      if (b.hardeningStarted > 0) v.hardeningSurvivalRates.push(b.hardeningSurvivalRate);
+      v.overallSurvivalRates.push(b.overallSurvivalRate);
+      if (b.year) v.years.push(b.year);
+    });
+
+    const varietySummary = Object.values(varietyMap).map(v => ({
+      cropName: v.cropName,
+      variety: v.variety,
+      batchCount: v.batchCount,
+      avgGerminationRate: v.germinationRates.length > 0
+        ? v.germinationRates.reduce((s, r) => s + r, 0) / v.germinationRates.length
+        : 0,
+      avgHardeningSurvivalRate: v.hardeningSurvivalRates.length > 0
+        ? v.hardeningSurvivalRates.reduce((s, r) => s + r, 0) / v.hardeningSurvivalRates.length
+        : null,
+      avgOverallSurvivalRate: v.overallSurvivalRates.length > 0
+        ? v.overallSurvivalRates.reduce((s, r) => s + r, 0) / v.overallSurvivalRates.length
+        : 0,
+      years: v.years.length > 0
+        ? `${Math.min(...v.years)}–${Math.max(...v.years)}`
+        : '—',
+    }));
+
+    return { batches: batchData, varietySummary };
+  }, [seedBatches, transactions, cropPlans, showCalculations]);
+
   const gardenROI = calculateGardenROI();
   const eggROI = calculateEggROI();
   const livestockROI = calculateLivestockProfitability();
+  const seedPerformance = calculateSeedStartingPerformance();
 
-  const hasData = gardenROI.length > 0 || eggROI || livestockROI;
+  const sortedSeedBatches = React.useMemo(() => {
+    if (!seedPerformance) return [];
+    const sorted = [...seedPerformance.batches];
+    sorted.sort((a, b) => {
+      let aVal, bVal;
+      switch (seedSortKey) {
+        case 'variety':
+          aVal = `${a.cropName} ${a.variety}`;
+          bVal = `${b.cropName} ${b.variety}`;
+          break;
+        case 'germinationRate':
+          aVal = a.germinationRate;
+          bVal = b.germinationRate;
+          break;
+        case 'hardeningSurvivalRate':
+          aVal = a.hardeningSurvivalRate;
+          bVal = b.hardeningSurvivalRate;
+          break;
+        case 'overallSurvivalRate':
+          aVal = a.overallSurvivalRate;
+          bVal = b.overallSurvivalRate;
+          break;
+        case 'costPerSurviving':
+          aVal = a.costPerSurviving ?? Infinity;
+          bVal = b.costPerSurviving ?? Infinity;
+          break;
+        default:
+          aVal = a[seedSortKey] ?? 0;
+          bVal = b[seedSortKey] ?? 0;
+      }
+      if (typeof aVal === 'string') {
+        return seedSortDir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return seedSortDir === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [seedPerformance, seedSortKey, seedSortDir]);
 
-  const canCalculate = harvests.length > 0 || production.length > 0 || livestock.length > 0;
+  const handleSeedSort = (key) => {
+    if (seedSortKey === key) {
+      setSeedSortDir(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSeedSortKey(key);
+      setSeedSortDir('asc');
+    }
+  };
+
+  const hasData = gardenROI.length > 0 || eggROI || livestockROI || seedPerformance;
+
+  const canCalculate = harvests.length > 0 || production.length > 0 || livestock.length > 0 || seedBatches.length > 0;
 
   if (!showCalculations) {
     return (
@@ -399,6 +555,153 @@ export default function ROIAnalytics() {
                   <strong>📊 Profitability Insight:</strong> Track acquisition costs and ongoing expenses against
                   income from sales and production to identify your most profitable animals.
                   {livestockROI.incomePerAcre !== null && ` Your livestock generates $${livestockROI.incomePerAcre.toFixed(2)} per acre.`}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Seed Starting Performance */}
+          {seedPerformance && seedPerformance.batches.length > 0 && (
+            <div className="bg-white rounded-lg p-4 border-2 border-emerald-300">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Sprout className="w-5 h-5 text-emerald-600" />
+                  Seed Starting Performance
+                </h3>
+                <Badge className="bg-emerald-600 text-white">
+                  {seedPerformance.batches.length} batches
+                </Badge>
+              </div>
+
+              {/* Per-batch table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-gray-200 text-xs text-gray-600">
+                      <th className="text-left py-2 px-2 cursor-pointer hover:text-emerald-700" onClick={() => handleSeedSort('variety')}>
+                        <span className="inline-flex items-center gap-1">Variety {seedSortKey === 'variety' && (seedSortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}</span>
+                      </th>
+                      <th className="text-center py-2 px-2 cursor-pointer hover:text-emerald-700" onClick={() => handleSeedSort('germinationRate')}>
+                        <span className="inline-flex items-center gap-1">Germ. Rate {seedSortKey === 'germinationRate' && (seedSortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}</span>
+                      </th>
+                      <th className="text-center py-2 px-2 cursor-pointer hover:text-emerald-700" onClick={() => handleSeedSort('hardeningSurvivalRate')}>
+                        <span className="inline-flex items-center gap-1">Hardening Survival {seedSortKey === 'hardeningSurvivalRate' && (seedSortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}</span>
+                      </th>
+                      <th className="text-center py-2 px-2 cursor-pointer hover:text-emerald-700" onClick={() => handleSeedSort('overallSurvivalRate')}>
+                        <span className="inline-flex items-center gap-1">Overall Survival {seedSortKey === 'overallSurvivalRate' && (seedSortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}</span>
+                      </th>
+                      <th className="text-right py-2 px-2">Total Cost</th>
+                      <th className="text-right py-2 px-2">Cost / Germ. Seedling</th>
+                      <th className="text-right py-2 px-2 cursor-pointer hover:text-emerald-700" onClick={() => handleSeedSort('costPerSurviving')}>
+                        <span className="inline-flex items-center gap-1">Cost / Surviving Plant {seedSortKey === 'costPerSurviving' && (seedSortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)}</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedSeedBatches.map(b => (
+                      <tr key={b.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-2 px-2">
+                          <div className="font-medium text-gray-900">{b.cropName}</div>
+                          <div className="text-xs text-gray-500">{b.variety}{b.year ? ` · ${b.year}` : ''}</div>
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          <span className={`font-medium ${(b.germinationRate * 100) >= 80 ? 'text-green-700' : (b.germinationRate * 100) >= 50 ? 'text-amber-700' : 'text-red-700'}`}>
+                            {(b.germinationRate * 100).toFixed(0)}%
+                          </span>
+                          <div className="text-xs text-gray-400">{b.seedsGerminated}/{b.seedsSown}</div>
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          {b.hardeningStarted > 0 ? (
+                            <>
+                              <span className={`font-medium ${(b.hardeningSurvivalRate * 100) >= 80 ? 'text-green-700' : (b.hardeningSurvivalRate * 100) >= 50 ? 'text-amber-700' : 'text-red-700'}`}>
+                                {(b.hardeningSurvivalRate * 100).toFixed(0)}%
+                              </span>
+                              <div className="text-xs text-gray-400">{b.hardeningSurvived}/{b.hardeningStarted}</div>
+                            </>
+                          ) : (
+                            <span className="text-gray-400 text-xs">Not started</span>
+                          )}
+                        </td>
+                        <td className="text-center py-2 px-2">
+                          <span className={`font-medium ${(b.overallSurvivalRate * 100) >= 60 ? 'text-green-700' : (b.overallSurvivalRate * 100) >= 30 ? 'text-amber-700' : 'text-red-700'}`}>
+                            {(b.overallSurvivalRate * 100).toFixed(0)}%
+                          </span>
+                          <div className="text-xs text-gray-400">{b.hardeningSurvived}/{b.seedsSown}</div>
+                        </td>
+                        <td className="text-right py-2 px-2 font-medium text-gray-900">${b.totalCost.toFixed(2)}</td>
+                        <td className="text-right py-2 px-2 text-gray-700">
+                          {b.costPerGerminated !== null ? `$${b.costPerGerminated.toFixed(2)}` : <span className="text-gray-400">N/A</span>}
+                        </td>
+                        <td className="text-right py-2 px-2 text-gray-700">
+                          {b.costPerSurviving !== null ? `$${b.costPerSurviving.toFixed(2)}` : <span className="text-gray-400">N/A</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Variety Summary across years */}
+              {seedPerformance.varietySummary.length > 1 && (
+                <div className="mt-6">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm">
+                    <Wind className="w-4 h-4 text-emerald-600" />
+                    Variety Performance Over Time
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b-2 border-gray-200 text-xs text-gray-600">
+                          <th className="text-left py-2 px-2">Crop / Variety</th>
+                          <th className="text-center py-2 px-2">Batches</th>
+                          <th className="text-center py-2 px-2">Years</th>
+                          <th className="text-center py-2 px-2">Avg Germ. Rate</th>
+                          <th className="text-center py-2 px-2">Avg Hardening Survival</th>
+                          <th className="text-center py-2 px-2">Avg Overall Survival</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {seedPerformance.varietySummary.map((v, idx) => (
+                          <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-2 px-2">
+                              <div className="font-medium text-gray-900">{v.cropName}</div>
+                              <div className="text-xs text-gray-500">{v.variety}</div>
+                            </td>
+                            <td className="text-center py-2 px-2 text-gray-700">{v.batchCount}</td>
+                            <td className="text-center py-2 px-2 text-gray-500 text-xs">{v.years}</td>
+                            <td className="text-center py-2 px-2">
+                              <span className={`font-medium ${(v.avgGerminationRate * 100) >= 80 ? 'text-green-700' : (v.avgGerminationRate * 100) >= 50 ? 'text-amber-700' : 'text-red-700'}`}>
+                                {(v.avgGerminationRate * 100).toFixed(0)}%
+                              </span>
+                            </td>
+                            <td className="text-center py-2 px-2">
+                              {v.avgHardeningSurvivalRate !== null ? (
+                                <span className={`font-medium ${(v.avgHardeningSurvivalRate * 100) >= 80 ? 'text-green-700' : (v.avgHardeningSurvivalRate * 100) >= 50 ? 'text-amber-700' : 'text-red-700'}`}>
+                                  {(v.avgHardeningSurvivalRate * 100).toFixed(0)}%
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 text-xs">No hardening</span>
+                              )}
+                            </td>
+                            <td className="text-center py-2 px-2">
+                              <span className={`font-medium ${(v.avgOverallSurvivalRate * 100) >= 60 ? 'text-green-700' : (v.avgOverallSurvivalRate * 100) >= 30 ? 'text-amber-700' : 'text-red-700'}`}>
+                                {(v.avgOverallSurvivalRate * 100).toFixed(0)}%
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-emerald-50 rounded p-3 mt-4">
+                <p className="text-xs text-emerald-800">
+                  <strong>🌱 Seed Starting Insight:</strong> Germination rate and hardening survival rate are shown
+                  as separate columns so you can trace a low overall survival to whichever stage caused it.
+                  Cost per surviving plant is your true cost per usable plant — the metric that matters for
+                  pricing seedlings or comparing varieties.
                 </p>
               </div>
             </div>
