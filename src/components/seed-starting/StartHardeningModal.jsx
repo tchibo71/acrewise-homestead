@@ -24,13 +24,17 @@ export default function StartHardeningModal({ batch, onClose }) {
   const isValid = formData.hardening_start_date && formData.hardening_started_count !== "";
 
   const handleSubmit = async () => {
+    console.log('[StartHardening] handleSubmit called', { batchId: batch?.id, formData });
     setIsSubmitting(true);
     try {
       // 1. Update the SeedBatch with hardening start info
       const submitData = { ...formData };
+      console.log('[StartHardening] submitData', submitData);
       if (submitData.hardening_started_count) submitData.hardening_started_count = parseFloat(submitData.hardening_started_count);
       Object.keys(submitData).forEach(k => { if (submitData[k] === "") delete submitData[k]; });
+      console.log('[StartHardening] calling update...');
       await base44.entities.SeedBatch.update(batch.id, submitData);
+      console.log('[StartHardening] update succeeded');
 
       // 2. Generate the day-by-day hardening schedule
       const totalDays = batch.hardening_days_planned ?? 10;
@@ -74,7 +78,8 @@ export default function StartHardeningModal({ batch, onClose }) {
       queryClient.invalidateQueries({ queryKey: ["checklists"] });
       onClose();
     } catch (e) {
-      toast({ title: "Failed to start hardening off", description: "Please try again.", variant: "destructive" });
+      console.error('[StartHardening] FAILED', e);
+      toast({ title: "Failed to start hardening off", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
