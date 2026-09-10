@@ -1,0 +1,149 @@
+{
+  "name": "CultureTransfer",
+  "type": "object",
+  "properties": {
+    "mushroom_culture_id": {
+      "type": "string",
+      "description": "ID of the MushroomCulture record this transfer belongs to"
+    },
+    "transfer_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the transfer was performed"
+    },
+    "transfer_type": {
+      "type": "string",
+      "enum": [
+        "agar_to_agar",
+        "agar_to_liquid_culture",
+        "agar_to_grain",
+        "liquid_culture_to_grain",
+        "grain_to_grain_expansion"
+      ],
+      "description": "Type of culture transfer"
+    },
+    "source_generation": {
+      "type": "string",
+      "enum": [
+        "g0_original",
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "description": "The generation being transferred FROM - g0 is the original agar/LC culture"
+    },
+    "resulting_generation": {
+      "type": "string",
+      "enum": [
+        "g1",
+        "g2",
+        "g3"
+      ],
+      "description": "The generation being created - do not allow g4 or beyond, professional practice stops expansion at g3 due to compounding contamination risk"
+    },
+    "container_count": {
+      "type": "number",
+      "description": "Number of jars/plates produced in this transfer"
+    },
+    "container_type": {
+      "type": "string",
+      "enum": [
+        "petri_dish",
+        "mason_jar",
+        "grain_bag",
+        "liquid_culture_jar"
+      ],
+      "description": "Type of container used for the resulting culture"
+    },
+    "sterilization_method": {
+      "type": "string",
+      "enum": [
+        "pressure_cooker",
+        "autoclave",
+        "instant_pot",
+        "none_liquid_culture_technique"
+      ],
+      "description": "Method used to sterilize the receiving containers/media"
+    },
+    "sterilization_temp_f": {
+      "type": "number",
+      "description": "Target 250F/121C for proper sterilization"
+    },
+    "sterilization_psi": {
+      "type": "number",
+      "description": "Target 15 PSI standard"
+    },
+    "sterilization_duration_minutes": {
+      "type": "number",
+      "description": "Duration of sterilization cycle in minutes"
+    },
+    "contamination_detected_count": {
+      "type": "number",
+      "default": 0,
+      "description": "How many of the container_count showed contamination"
+    },
+    "contamination_organism": {
+      "type": "string",
+      "enum": [
+        "aspergillus",
+        "penicillium",
+        "trichoderma",
+        "bacillus_bacterial",
+        "yeast",
+        "unknown",
+        "none"
+      ],
+      "description": "Primary contaminant identified"
+    },
+    "contamination_rate_percent": {
+      "type": "number",
+      "description": "Calculated: contamination_detected_count / container_count * 100"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes about this transfer"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "mushroom_culture_id",
+    "transfer_date",
+    "transfer_type",
+    "container_count"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
