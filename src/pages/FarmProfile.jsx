@@ -75,7 +75,8 @@ export default function FarmProfile() {
     elevation_ft: null,
     hardiness_zone: "",
     wetlands_present: null,
-    site_data_fetched_date: ""
+    site_data_fetched_date: "",
+    mushroom_operation_scale: "hobby"
   });
 
   useEffect(() => {
@@ -96,7 +97,8 @@ export default function FarmProfile() {
         elevation_ft: profile.elevation_ft ?? null,
         hardiness_zone: profile.hardiness_zone || "",
         wetlands_present: profile.wetlands_present ?? null,
-        site_data_fetched_date: profile.site_data_fetched_date || ""
+        site_data_fetched_date: profile.site_data_fetched_date || "",
+        mushroom_operation_scale: profile.mushroom_operation_scale || "hobby"
       });
       if (profile.ai_recommendations) {
         setAiRecommendations(profile.ai_recommendations);
@@ -540,6 +542,41 @@ Format as clear, numbered sections with specific actionable advice.`;
                     placeholder="e.g., 8.0"
                   />
                 </div>
+              </div>
+
+              <div className="border rounded-lg p-4 bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+                <Label className="text-base font-semibold text-gray-900">
+                  Mushroom Growing Scale
+                </Label>
+                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex rounded-lg border border-amber-300 overflow-hidden w-full sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, mushroom_operation_scale: "hobby"})}
+                      className={`px-4 py-2 text-sm font-medium transition-colors flex-1 sm:flex-none ${
+                        formData.mushroom_operation_scale !== "commercial"
+                          ? "bg-amber-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-amber-50"
+                      }`}
+                    >
+                      Hobby / Personal Use
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, mushroom_operation_scale: "commercial"})}
+                      className={`px-4 py-2 text-sm font-medium transition-colors flex-1 sm:flex-none ${
+                        formData.mushroom_operation_scale === "commercial"
+                          ? "bg-amber-600 text-white"
+                          : "bg-white text-gray-700 hover:bg-amber-50"
+                      }`}
+                    >
+                      Commercial Operation
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 mt-2">
+                  This controls whether advanced lab, facility, and wholesale tools appear in your navigation. You can change this anytime as your operation grows.
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -127,6 +127,15 @@
       "format": "date",
       "description": "Date when site data (soil, flood, elevation, hardiness, wetlands) was last fetched"
     },
+    "mushroom_operation_scale": {
+      "type": "string",
+      "enum": [
+        "hobby",
+        "commercial"
+      ],
+      "default": "hobby",
+      "description": "Scale of mushroom growing operation \u2014 controls visibility of advanced lab, facility, and wholesale tools"
+    },
     "ai_recommendations": {
       "type": "string",
       "description": "AI-generated recommendations for improvements"
