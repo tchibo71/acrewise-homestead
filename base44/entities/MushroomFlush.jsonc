@@ -1,0 +1,89 @@
+{
+  "name": "MushroomFlush",
+  "type": "object",
+  "properties": {
+    "mushroom_batch_id": {
+      "type": "string",
+      "description": "ID of the MushroomBatch this flush was harvested from"
+    },
+    "flush_number": {
+      "type": "number",
+      "description": "Which flush from this batch (1st, 2nd, 3rd, etc.)"
+    },
+    "harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date this flush was harvested"
+    },
+    "yield_lbs": {
+      "type": "number",
+      "description": "Total weight harvested in pounds"
+    },
+    "species": {
+      "type": "string",
+      "enum": [
+        "oyster",
+        "shiitake",
+        "lions_mane",
+        "wine_cap",
+        "button",
+        "portobello",
+        "reishi",
+        "maitake",
+        "other"
+      ],
+      "description": "Mushroom species (copied from batch for convenience)"
+    },
+    "allocated_lbs": {
+      "type": "number",
+      "default": 0,
+      "description": "How many lbs have been allocated to wholesale orders \u2014 used to determine available capacity"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "mushroom_batch_id",
+    "flush_number",
+    "harvest_date",
+    "yield_lbs"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

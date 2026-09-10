@@ -24,6 +24,7 @@ const SeedStarting = React.lazy(() => import('./pages/SeedStarting'));
 const MushroomCultivation = React.lazy(() => import('./pages/MushroomCultivation'));
 const MushroomLab = React.lazy(() => import('./pages/MushroomLab'));
 const GrowRoomManagement = React.lazy(() => import('./pages/GrowRoomManagement'));
+const MushroomWholesale = React.lazy(() => import('./pages/MushroomWholesale'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -145,6 +146,11 @@ const AuthenticatedApp = () => {
         <Route path="/GrowRoomManagement" element={
           <LayoutWrapper currentPageName="GrowRoomManagement">
             <GrowRoomManagement />
+          </LayoutWrapper>
+        } />
+        <Route path="/MushroomWholesale" element={
+          <LayoutWrapper currentPageName="MushroomWholesale">
+            <MushroomWholesale />
           </LayoutWrapper>
         } />
         <Route path="*" element={<PageNotFound />} />
