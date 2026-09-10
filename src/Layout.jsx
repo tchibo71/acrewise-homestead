@@ -180,6 +180,11 @@ const operationsItems = [
     proOnly: true,
   },
   {
+    title: "Seed Starting",
+    url: createPageUrl("SeedStarting"),
+    icon: Sprout,
+  },
+  {
     title: "Fermentation",
     url: createPageUrl("FermentationTracking"),
     icon: Beaker,
