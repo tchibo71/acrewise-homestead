@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sprout, Calendar, Layers, TrendingUp, Wind, CheckCircle2, DollarSign, MapPin, Lightbulb } from "lucide-react";
+import { Sprout, Calendar, Layers, TrendingUp, Wind, CheckCircle2, DollarSign, MapPin, Lightbulb, ShoppingBag, Flower2 } from "lucide-react";
 import {
   getSeedBatchStage, STAGE_COLORS,
   CONTAINER_TYPES, INTENDED_USES, INDOOR_LIGHT_TYPES,
@@ -10,6 +10,8 @@ import {
 import LogGerminationModal from "./LogGerminationModal";
 import StartHardeningModal from "./StartHardeningModal";
 import CompleteHardeningModal from "./CompleteHardeningModal";
+import ListForSaleModal from "./ListForSaleModal";
+import TransplantToGardenModal from "./TransplantToGardenModal";
 
 function FieldRow({ icon: Icon, label, value }) {
   return (
@@ -111,6 +113,35 @@ export default function SeedBatchDetailDialog({ batch, onClose }) {
                 <p className="text-sm text-green-600 text-center font-medium">All checkpoints complete</p>
               )}
             </div>
+
+            {((batch.intended_use === "sell" || batch.intended_use === "both") && batch.hardening_survived_count) ||
+             (batch.intended_use === "own_use" || batch.intended_use === "both") ? (
+              <div className="space-y-2 pt-2 border-t border-gray-200">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Completion Actions</p>
+                {(batch.intended_use === "sell" || batch.intended_use === "both") && batch.hardening_survived_count && (
+                  batch.marketplace_listing_id ? (
+                    <div className="flex items-center justify-center gap-2 text-sm text-green-600 font-medium py-2">
+                      <ShoppingBag className="w-4 h-4" /> Listed for Sale
+                    </div>
+                  ) : (
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => setActiveModal("listSale")}>
+                      <ShoppingBag className="w-4 h-4 mr-2" /> List for Sale
+                    </Button>
+                  )
+                )}
+                {(batch.intended_use === "own_use" || batch.intended_use === "both") && (
+                  batch.transplant_date ? (
+                    <div className="flex items-center justify-center gap-2 text-sm text-green-600 font-medium py-2">
+                      <Flower2 className="w-4 h-4" /> Transplanted to Garden
+                    </div>
+                  ) : (
+                    <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => setActiveModal("transplant")}>
+                      <Flower2 className="w-4 h-4 mr-2" /> Transplant to Garden
+                    </Button>
+                  )
+                )}
+              </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
@@ -118,6 +149,8 @@ export default function SeedBatchDetailDialog({ batch, onClose }) {
       {activeModal === "germination" && <LogGerminationModal batch={batch} onClose={() => setActiveModal(null)} />}
       {activeModal === "hardening" && <StartHardeningModal batch={batch} onClose={() => setActiveModal(null)} />}
       {activeModal === "complete" && <CompleteHardeningModal batch={batch} onClose={() => setActiveModal(null)} />}
+      {activeModal === "listSale" && <ListForSaleModal batch={batch} onClose={() => setActiveModal(null)} />}
+      {activeModal === "transplant" && <TransplantToGardenModal batch={batch} onClose={() => setActiveModal(null)} />}
     </>
   );
 }

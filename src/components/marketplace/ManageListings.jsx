@@ -16,17 +16,20 @@ import {
   Trash2,
   ExternalLink,
   Copy,
-  CheckCircle2
+  CheckCircle2,
+  MessageSquare
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import CustomerInquiryModal from "./CustomerInquiryModal";
 
 export default function ManageListings() {
   const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingListing, setEditingListing] = useState(null);
   const [copiedUrl, setCopiedUrl] = useState(false);
+  const [inquiryListing, setInquiryListing] = useState(null);
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -168,6 +171,12 @@ export default function ManageListings() {
                       checked={listing.is_public}
                       onCheckedChange={(checked) => togglePublicMutation.mutate({ id: listing.id, isPublic: checked })}
                     />
+                    {listing.category === "plants" && (
+                      <Button variant="outline" size="sm" onClick={() => setInquiryListing(listing)}>
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        Reserve/Inquire
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => { setEditingListing(listing); setShowAddModal(true); }}>
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -186,6 +195,12 @@ export default function ManageListings() {
             listing={editingListing}
             inventory={inventory}
             onClose={() => { setShowAddModal(false); setEditingListing(null); }}
+          />
+        )}
+        {inquiryListing && (
+          <CustomerInquiryModal
+            listing={inquiryListing}
+            onClose={() => setInquiryListing(null)}
           />
         )}
       </CardContent>
