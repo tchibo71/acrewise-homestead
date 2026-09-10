@@ -1,0 +1,118 @@
+{
+  "name": "GrowRoom",
+  "type": "object",
+  "properties": {
+    "room_name": {
+      "type": "string",
+      "description": "Name or identifier for this grow room"
+    },
+    "room_type": {
+      "type": "string",
+      "enum": [
+        "lab_clean_room",
+        "incubation_room",
+        "fruiting_chamber",
+        "cold_storage",
+        "other"
+      ],
+      "description": "Type of grow room"
+    },
+    "target_temp_f": {
+      "type": "number",
+      "description": "Target temperature in Fahrenheit"
+    },
+    "target_humidity_percent": {
+      "type": "number",
+      "description": "Target humidity percentage"
+    },
+    "target_co2_ppm": {
+      "type": "number",
+      "description": "Target CO2 in parts per million"
+    },
+    "has_hepa_filtration": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the room has HEPA filtration"
+    },
+    "has_automated_climate_control": {
+      "type": "boolean",
+      "default": false,
+      "description": "Reserved for future sensor/controller integration"
+    },
+    "current_temp_f": {
+      "type": "number",
+      "description": "Most recent reading - manual entry for now, structured to support automated sensor feed later"
+    },
+    "current_humidity_percent": {
+      "type": "number",
+      "description": "Most recent humidity reading percentage"
+    },
+    "current_co2_ppm": {
+      "type": "number",
+      "description": "Most recent CO2 reading in ppm"
+    },
+    "last_reading_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the most recent climate reading"
+    },
+    "last_sanitized_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the room was last sanitized"
+    },
+    "sanitation_frequency_days": {
+      "type": "number",
+      "default": 7,
+      "description": "How often the room should be sanitized, in days"
+    },
+    "capacity_description": {
+      "type": "string",
+      "description": "Description of room capacity (e.g., '12 shelving units, 200 jars')"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "room_name",
+    "room_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
