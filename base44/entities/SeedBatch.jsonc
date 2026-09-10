@@ -1,0 +1,225 @@
+{
+  "name": "SeedBatch",
+  "type": "object",
+  "properties": {
+    "crop_plan_id": {
+      "type": "string",
+      "description": "optional link to the related CropPlan record"
+    },
+    "crop_name": {
+      "type": "string",
+      "description": "Name of the crop"
+    },
+    "variety": {
+      "type": "string",
+      "description": "Specific variety of the crop"
+    },
+    "sow_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date seeds were sown"
+    },
+    "container_type": {
+      "type": "string",
+      "enum": [
+        "cell_tray",
+        "flat",
+        "pot",
+        "soil_block",
+        "other"
+      ],
+      "description": "Type of container used for starting seeds"
+    },
+    "cell_count": {
+      "type": "number",
+      "description": "number of cells/pots in this batch"
+    },
+    "seeds_sown": {
+      "type": "number",
+      "description": "Total number of seeds sown in this batch"
+    },
+    "seed_source": {
+      "type": "string",
+      "description": "Where the seeds were purchased or sourced"
+    },
+    "seed_lot_number": {
+      "type": "string",
+      "description": "Lot number from the seed packet for traceability"
+    },
+    "seed_cost": {
+      "type": "number",
+      "description": "cost of the seed for this batch specifically"
+    },
+    "germination_check_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date germination was assessed"
+    },
+    "seeds_germinated": {
+      "type": "number",
+      "description": "count of seedlings that actually came up"
+    },
+    "germination_loss_reason": {
+      "type": "string",
+      "enum": [
+        "damping_off",
+        "poor_seed_viability",
+        "temperature_issue",
+        "overwatering",
+        "underwatering",
+        "pests",
+        "unknown",
+        "other",
+        "none"
+      ],
+      "description": "Primary reason for germination losses"
+    },
+    "germination_notes": {
+      "type": "string",
+      "description": "Notes on germination results"
+    },
+    "hardening_start_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date hardening off began"
+    },
+    "hardening_days_planned": {
+      "type": "number",
+      "default": 10,
+      "description": "Number of days planned for hardening off"
+    },
+    "hardening_started_count": {
+      "type": "number",
+      "description": "how many seedlings entered hardening off - may be less than seeds_germinated if some were culled"
+    },
+    "hardening_completed_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date hardening off was completed"
+    },
+    "hardening_survived_count": {
+      "type": "number",
+      "description": "how many made it through hardening off successfully"
+    },
+    "hardening_loss_reason": {
+      "type": "string",
+      "enum": [
+        "sunscald",
+        "cold_shock",
+        "wind_damage",
+        "transplant_shock",
+        "pests",
+        "animal_damage",
+        "forgot_to_bring_in",
+        "unknown",
+        "other",
+        "none"
+      ],
+      "description": "Primary reason for hardening off losses"
+    },
+    "hardening_notes": {
+      "type": "string",
+      "description": "Notes on the hardening off process"
+    },
+    "intended_use": {
+      "type": "string",
+      "enum": [
+        "sell",
+        "own_use",
+        "both"
+      ],
+      "description": "Whether this batch is intended for sale, own use, or both"
+    },
+    "quantity_listed_for_sale": {
+      "type": "number",
+      "description": "Number of seedlings listed for sale"
+    },
+    "price_per_unit": {
+      "type": "number",
+      "description": "Price per seedling unit"
+    },
+    "ready_to_sell_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date seedlings are ready to sell"
+    },
+    "marketplace_listing_id": {
+      "type": "string",
+      "description": "link to MarketplaceListing once created"
+    },
+    "transplant_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date seedlings were transplanted out"
+    },
+    "transplanted_count": {
+      "type": "number",
+      "description": "Number of seedlings transplanted"
+    },
+    "garden_plot_id": {
+      "type": "string",
+      "description": "link to the GardenPlot this batch was transplanted into"
+    },
+    "indoor_light_type": {
+      "type": "string",
+      "enum": [
+        "grow_light",
+        "windowsill",
+        "greenhouse",
+        "other"
+      ],
+      "description": "Light setup used for indoor seed starting"
+    },
+    "used_heat_mat": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether a heat mat was used for germination"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes about this seed batch"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "crop_name",
+    "sow_date",
+    "seeds_sown",
+    "intended_use"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
