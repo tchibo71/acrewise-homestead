@@ -1,0 +1,182 @@
+{
+  "name": "MushroomBatch",
+  "type": "object",
+  "properties": {
+    "batch_name": {
+      "type": "string",
+      "description": "Name or identifier for this mushroom batch"
+    },
+    "species": {
+      "type": "string",
+      "enum": [
+        "oyster",
+        "shiitake",
+        "lions_mane",
+        "wine_cap",
+        "button",
+        "portobello",
+        "reishi",
+        "maitake",
+        "other"
+      ],
+      "description": "Mushroom species"
+    },
+    "strain_name": {
+      "type": "string",
+      "description": "Specific strain name"
+    },
+    "substrate_type": {
+      "type": "string",
+      "enum": [
+        "sawdust",
+        "straw",
+        "hardwood_plugs",
+        "grain",
+        "compost",
+        "manure_based",
+        "log",
+        "other"
+      ],
+      "description": "Type of substrate used"
+    },
+    "container_type": {
+      "type": "string",
+      "enum": [
+        "mason_jar",
+        "grain_bag",
+        "monotub",
+        "grow_bag",
+        "tray",
+        "log",
+        "other"
+      ],
+      "description": "Type of container used"
+    },
+    "container_count": {
+      "type": "number",
+      "description": "Number of containers in this batch"
+    },
+    "inoculation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date spawn was added to the substrate"
+    },
+    "expected_colonization_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected date for full colonization"
+    },
+    "expected_harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Expected first harvest date"
+    },
+    "actual_harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of actual first harvest"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "inoculated",
+        "colonizing",
+        "fruiting",
+        "harvesting",
+        "completed",
+        "failed"
+      ],
+      "default": "inoculated",
+      "description": "Current batch status"
+    },
+    "yield_lbs": {
+      "type": "number",
+      "description": "Total harvested yield in pounds"
+    },
+    "spawn_sourcing": {
+      "type": "string",
+      "enum": [
+        "purchased",
+        "self_produced"
+      ],
+      "description": "Whether spawn was purchased or self-produced from a culture transfer"
+    },
+    "spawn_source": {
+      "type": "string",
+      "description": "Where purchased spawn was sourced from"
+    },
+    "spawn_type": {
+      "type": "string",
+      "enum": [
+        "grain_spawn",
+        "plug_spawn",
+        "liquid_culture",
+        "sawdust_spawn",
+        "sawdust_block"
+      ],
+      "description": "Type of spawn used (for purchased spawn)"
+    },
+    "spawn_cost": {
+      "type": "number",
+      "description": "Cost of purchased spawn"
+    },
+    "spawn_culture_transfer_id": {
+      "type": "string",
+      "description": "If self_produced, link to the CultureTransfer record this spawn came from"
+    },
+    "grow_room_id": {
+      "type": "string",
+      "description": "Which GrowRoom this batch is currently located in"
+    },
+    "lot_number": {
+      "type": "string",
+      "description": "Auto-generated as [species abbreviation]-[inoculation_date as YYYYMMDD]-[short random suffix] on creation, for traceability"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "batch_name",
+    "species",
+    "inoculation_date",
+    "spawn_sourcing"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
