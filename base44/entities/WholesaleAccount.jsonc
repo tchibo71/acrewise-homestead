@@ -1,0 +1,145 @@
+{
+  "name": "WholesaleAccount",
+  "type": "object",
+  "properties": {
+    "account_name": {
+      "type": "string",
+      "description": "Name of the wholesale account"
+    },
+    "account_type": {
+      "type": "string",
+      "enum": [
+        "restaurant",
+        "grocery_co_op",
+        "farmers_market_vendor",
+        "distributor",
+        "other"
+      ],
+      "description": "Type of wholesale account"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "Contact phone number"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "Contact email address"
+    },
+    "standing_order_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this account has an active standing order"
+    },
+    "standing_order_species": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Species included in the standing order"
+    },
+    "standing_order_quantity": {
+      "type": "number",
+      "description": "Quantity per delivery for standing orders"
+    },
+    "standing_order_unit": {
+      "type": "string",
+      "enum": [
+        "lbs",
+        "oz",
+        "cases"
+      ],
+      "description": "Unit for standing order quantity"
+    },
+    "standing_order_frequency": {
+      "type": "string",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly",
+        "custom",
+        "none"
+      ],
+      "description": "Delivery frequency for standing orders"
+    },
+    "delivery_day": {
+      "type": "string",
+      "description": "e.g. 'Tuesday' for weekly deliveries"
+    },
+    "delivery_method": {
+      "type": "string",
+      "enum": [
+        "self_delivery",
+        "customer_pickup",
+        "third_party_courier"
+      ],
+      "description": "How product is delivered to this account"
+    },
+    "agreed_price_per_unit": {
+      "type": "number",
+      "description": "Agreed price per unit in dollars"
+    },
+    "payment_terms": {
+      "type": "string",
+      "enum": [
+        "due_on_delivery",
+        "net_15",
+        "net_30",
+        "other"
+      ],
+      "description": "Payment terms with this account"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this account is currently active"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "account_name",
+    "account_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
