@@ -1,0 +1,81 @@
+{
+  "name": "SanitationLog",
+  "type": "object",
+  "properties": {
+    "grow_room_id": {
+      "type": "string",
+      "description": "ID of the GrowRoom this sanitation event belongs to"
+    },
+    "sanitation_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the sanitation was performed"
+    },
+    "sanitation_type": {
+      "type": "string",
+      "enum": [
+        "surface_wipe_down",
+        "hepa_filter_change",
+        "full_room_treatment",
+        "air_scrubber_run",
+        "tool_sterilization",
+        "handwashing_station_check",
+        "other"
+      ],
+      "description": "Type of sanitation performed"
+    },
+    "performed_by": {
+      "type": "string",
+      "description": "Who performed the sanitation"
+    },
+    "products_used": {
+      "type": "string",
+      "description": "Cleaning/sanitizing products used"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    },
+    "team_owner_email": {
+      "type": "string",
+      "description": "Email of the team owner for shared access"
+    }
+  },
+  "required": [
+    "grow_room_id",
+    "sanitation_date",
+    "sanitation_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "data.team_owner_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
