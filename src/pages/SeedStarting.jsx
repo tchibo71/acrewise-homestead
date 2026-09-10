@@ -133,7 +133,7 @@ export default function SeedStarting() {
         )}
 
         {showAddModal && <AddSeedBatchModal onClose={() => setShowAddModal(false)} />}
-        {selectedBatch && <SeedBatchDetailDialog batch={selectedBatch} onClose={() => setSelectedBatch(null)} />}
+        {selectedBatch && <SeedBatchDetailDialog batch={batches.find(b => b.id === selectedBatch.id) || selectedBatch} onClose={() => setSelectedBatch(null)} />}
       </div>
     </div>
   );

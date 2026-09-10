@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, Check } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { generateHardeningSchedule, checkHardeningWeatherWarnings } from "@/components/utils/hardeningScheduleUtils";
 import { fetchDailyForecast } from "@/components/utils/weatherUtils";
 
 export default function StartHardeningModal({ batch, onClose }) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const defaultCount = batch.seeds_germinated ?? batch.seeds_sown ?? "";
   const [formData, setFormData] = useState({
     hardening_start_date: new Date().toISOString().split("T")[0],
@@ -72,7 +74,7 @@ export default function StartHardeningModal({ batch, onClose }) {
       queryClient.invalidateQueries({ queryKey: ["checklists"] });
       onClose();
     } catch (e) {
-      alert("Failed to start hardening off. Please try again.");
+      toast({ title: "Failed to start hardening off", description: "Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
