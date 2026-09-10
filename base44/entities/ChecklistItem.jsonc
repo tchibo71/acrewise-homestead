@@ -95,6 +95,10 @@
       "type": "string",
       "description": "If task is for specific animal, the animal's ID"
     },
+    "seed_batch_id": {
+      "type": "string",
+      "description": "If task is for a specific seed batch, the batch's ID"
+    },
     "animal_specific_notes": {
       "type": "string",
       "description": "Notes specific to the animal for this task"

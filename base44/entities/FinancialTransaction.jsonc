@@ -65,6 +65,10 @@
       "type": "string",
       "description": "Related livestock ID if applicable"
     },
+    "seed_batch_id": {
+      "type": "string",
+      "description": "Related SeedBatch ID if applicable"
+    },
     "team_owner_email": {
       "type": "string",
       "description": "Email of the team owner for shared access"
