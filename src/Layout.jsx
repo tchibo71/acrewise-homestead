@@ -233,7 +233,8 @@ const infrastructureItems = [
 ];
 
 // Navigation content component to avoid duplication
-function NavigationContent({ subscriptionData, location, onItemClick }) {
+function NavigationContent({ subscriptionData, location, onItemClick, isCommercialMushroom }) {
+  const visibleOperations = operationsItems.filter(i => !i.commercialOnly || isCommercialMushroom);
   return (
     <>
       {/* Navigation Group */}
@@ -266,7 +267,7 @@ function NavigationContent({ subscriptionData, location, onItemClick }) {
         <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider px-3 py-2">
           Operations
         </p>
-        {operationsItems.map((item) => (
+        {visibleOperations.map((item) => (
           <Link
             key={item.title}
             to={item.url}
@@ -367,6 +368,17 @@ export default function Layout({ children, currentPageName }) {
     initialData: { isPro: false, plan: "free", status: "none" }
   });
 
+  const { data: farmProfile } = useQuery({
+    queryKey: ['farm-profile'],
+    queryFn: async () => {
+      const profiles = await base44.entities.FarmProfile.list();
+      return profiles[0] || null;
+    },
+  });
+
+  const isCommercialMushroom = farmProfile?.mushroom_operation_scale === "commercial";
+  const visibleOperations = operationsItems.filter(i => !i.commercialOnly || isCommercialMushroom);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gradient-to-br from-amber-50 via-green-50 to-emerald-50">
@@ -421,7 +433,7 @@ export default function Layout({ children, currentPageName }) {
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {operationsItems.map((item) => (
+                  {visibleOperations.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
@@ -563,6 +575,7 @@ export default function Layout({ children, currentPageName }) {
                         subscriptionData={subscriptionData} 
                         location={location}
                         onItemClick={() => setMobileMenuOpen(false)}
+                        isCommercialMushroom={isCommercialMushroom}
                       />
                     </div>
                   </SheetContent>
